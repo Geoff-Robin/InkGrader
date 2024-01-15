@@ -78,6 +78,33 @@ When entering plan mode, do not produce a simple task checklist. Structure the p
 - **Serialization/API impact**: does this change request/response shapes, GraphQL schema, or public types?
 - **Consumers affected**: list other modules/services that read or write this data and may need updates
 
+### 3b. Implementation Rules
+
+All implementation steps in this plan must follow a strict Red-Green-Refactor TDD cycle. Break the "Proposed Design" into the smallest reasonable increments, and for each increment:
+
+1. **Red** — write a test that captures the new/changed behavior *before* writing any implementation code. The test must fail for the right reason (missing behavior, not a typo or import error).
+2. **Confirm failure** — run just that test and read the failure output. Do not proceed on assumption; verify it fails.
+3. **Green** — write the minimum implementation code needed to make the test pass. Avoid solving future increments early.
+4. **Confirm pass** — run the test (and the surrounding suite) to verify it passes and nothing else broke.
+5. **Refactor** — clean up naming, structure, and duplication with the safety net of the passing test(s). Re-run tests after refactoring.
+
+Repeat per increment rather than writing a batch of implementation and tests together at the end.
+
+**Backend (`core`, `api`, `worker`, `gateway`)**
+- Every increment touching `core/` gets a corresponding test in `backend/core/tests/` (`test_database.py`, `test_file_processor.py`, `test_grading_agent.py`, `test_grading_task.py`, or `test_grading_queue.py` as appropriate — add a new test module only if none of these fit).
+- Run cycles with `uv run --package inkgrader-core pytest` from `backend/core/`; scope to the single new/changed test during Red/Green (`pytest path::test_name`), then run the full package suite before moving to the next increment.
+- Concurrency-sensitive changes (queue claiming, advisory locks, `asyncio.gather` fan-out) must have a test that would fail under a race before the fix is written, not just a happy-path test after.
+- `api`, `worker`, `gateway` have no dedicated test suites listed in this doc — if an increment touches them directly (not via `core`), add a minimal test alongside the change and note the new test location in this plan; don't skip Red-Green silently because "there's no existing suite."
+
+**Frontend**
+- No test runner is configured (no jest/vitest in `package.json`). TDD as specified above cannot apply as-is.
+- Any implementation step touching `frontend/` must either:
+  (a) be scoped as a **non-goal** for automated testing and called out explicitly as manually-verified only, or
+  (b) include a prerequisite increment to add a minimal test runner before the Red step — decide which and state it in Section 1 (Non-goals) rather than leaving it implicit.
+
+**Plan-writing implication**
+- The "Proposed Design" section should decompose work into an ordered list of Red-Green-Refactor increments (not just a feature description), so this section and Section 3 stay consistent — each design component should map to at least one visible test-first increment.
+
 ### 4. Alternatives Considered
 *(Include only if there was a genuine fork in approach worth recording — e.g. multiple viable architectures, a tradeoff between performance/simplicity/compatibility, or a non-obvious choice a reviewer would ask "why not X?" about. Omit entirely for small, mechanical, or single-obvious-approach changes — do not include it as "N/A" or pad it with a strawman.)*
 
