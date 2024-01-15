@@ -14,11 +14,11 @@ from Grading.queue import publish_grading_update
 
 logger = logging.getLogger(__name__)
 
-async def grade_student(exam_id: uuid.UUID, student_id: uuid.UUID, question_map: dict, agent: GradingAgent):
+async def grade_student(exam_id: uuid.UUID, student_id: uuid.UUID, question_map: dict, agent: GradingAgent) -> bool:
     async with student_grading_lock(student_id) as acquired:
         if not acquired:
             logger.info(f"Student {student_id} already being graded by another worker, skipping.")
-            return
+            return False
 
         logger.info(f"Processing student: {student_id}")
         async with async_session() as session:
@@ -66,8 +66,10 @@ async def grade_student(exam_id: uuid.UUID, student_id: uuid.UUID, question_map:
                 await answers_dal.update_answers(answers_to_update)
                 await student_dal.update_student(student_id=student_id, marks=total_marks)
                 logger.info(f"Completed grading for student {student_id}. Total Marks: {total_marks}")
+                success = True
             else:
                 logger.warning(f"No valid answers graded for student {student_id}.")
+                success = False
 
         payload = {
             "exam_id": str(exam_id),
@@ -81,8 +83,10 @@ async def grade_student(exam_id: uuid.UUID, student_id: uuid.UUID, question_map:
         except Exception as e:
             logger.error(f"Failed to publish grading update for student {student_id}: {e}")
 
+        return success
 
-async def process_grading_job(grading_info: GradingInfo):
+
+async def process_grading_job(grading_info: GradingInfo) -> dict[uuid.UUID, bool]:
     exam_id = grading_info.exam_id
     student_ids = grading_info.student_ids
     logger.info(f"Started grading task for exam_id: {exam_id} with {len(student_ids)} students.")
@@ -94,7 +98,12 @@ async def process_grading_job(grading_info: GradingInfo):
 
     agent = GradingAgent(api_key=os.environ.get("GROQ_API_KEY"), exam_id=exam_id)
 
-    await asyncio.gather(
+    results = await asyncio.gather(
         *(grade_student(exam_id, student_id, question_map, agent) for student_id in student_ids),
         return_exceptions=True,
     )
+
+    return {
+        student_id: (result is True)
+        for student_id, result in zip(student_ids, results)
+    }
