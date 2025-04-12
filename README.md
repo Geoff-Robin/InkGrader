@@ -1,52 +1,114 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-</head>
-<body>
+### InkGrader 🖋
 
-  <h1>🚀 Run Locally</h1>
+InkGrader is an AI-powered web application designed to automate the evaluation of handwritten documents using OCR (Optical Character Recognition) and intelligent agent systems. It provides a seamless experience for uploading scanned documents, extracting textual content, evaluating responses, and managing user authentication—all within a modern web interface.
 
-  <h2>🔧 Frontend (Vite + React)</h2>
+## 🚀 Features
 
-  <p>Navigate to the frontend directory:</p>
-  <pre><code>cd frontend</code></pre>
+- 📷 OCR Integration: Extracts handwritten text using the OCR.Space API.
+- 🤖 Evaluation Agents: Intelligent agents analyze and score extracted content.
+- 🔐 User Authentication: Secure login/logout with JWT-based authentication.
+- 📦 Modular Backend: Flask-based API with organized modules for OCR, Auth, Database, and Evaluation.
+- 💻 Modern Frontend: Built with React + Vite for fast, responsive UI.
+- 🌐 Cross-Origin Support: Enabled via CORS for frontend-backend communication.
 
-  <p>Install dependencies:</p>
-  <pre><code>npm install</code></pre>
+---
+## Installation
 
-  <p>Start the development server:</p>
-  <pre><code>npm run dev</code></pre>
+### Backend Setup
 
-  <p>The app will run at <a href="http://localhost:5173">http://localhost:5173</a></p>
+1. Navigate to the backend directory:
+   bash
+   cd InkGrader-main/backend
+   
 
-  <hr/>
+2. Create a virtual environment (optional but recommended):
+   bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows: venv\\Scripts\\activate
+   
 
-  <h2>🧪 Backend (Flask)</h2>
-  <p>Move to backend directory:</p>
-  <pre><code>cd backend</code></pre>
+3. Install dependencies:
+   bash
+   pip install -r requirements.txt
+   
 
-  <p>Create and activate a virtual environment:</p>
-  <pre><code>python -m venv venv
-venv\Scripts\activate   :: PowerShell
-:: OR
-venv\Scripts\activate.bat   :: Command Prompt</code></pre>
+4. Run the Flask server:
+   bash
+   python app.py
+   
 
-  <pre><code>python -m venv venv
-venv\Scripts\activate   :: PowerShell
-:: OR
-venv\Scripts\activate.bat   :: Command Prompt</code></pre>
+### Frontend Setup
 
-  <p>Install Python dependencies:</p>
-  <pre><code>pip install -r requirements.txt</code></pre>
+1. Navigate to the frontend directory:
+   bash
+   cd ../demo-frontend
+   
 
-  <p>Run the Flask server:</p>
-  <pre><code>python app.py</code></pre>
+2. Install frontend dependencies:
+   bash
+   npm install
+   
 
-  <p>The API will be live at <a href="http://localhost:5000">http://localhost:5000</a></p>
+3. Start the development server:
+   bash
+   npm run dev
+   
 
-  <hr/>
+## Usage
 
-</body>
-</html>
+1. Start both the backend and frontend servers.
+2. Open your browser and navigate to the frontend app.
+3. Log in or register a new account.
+4. Upload a scanned handwritten document.
+5. Let the evaluation agent process and grade the content.
+6. View results and feedback directly in the app.
+
+## Technologies Used
+
+### Backend
+- Flask (REST API)
+- Flask-JWT-Extended (authentication)
+- Flask-CORS
+- OCR.Space API (OCR services)
+- Python 3
+
+### Frontend
+- React
+- Vite
+- ESLint
+
+## Configuration
+
+Before running the app, make sure to set the following environment variables:
+
+- OCR_API_KEY: Your OCR.Space API key for OCR functionality.
+- SECRET_KEY: A secret key for Flask JWT authentication.
+
+You can create a .env file and add these variables:
+bash
+OCR_API_KEY=your_api_key_here
+SECRET_KEY=your_secret_key_here
+
+
+## Acknowledgments
+
+- OCR.Space for their free OCR API.
+- Flask for the backend framework.
+- React and Vite for the frontend tools.
+- The contributors and open-source community for making this project possible.
+
+## Contributing
+
+Contributions are welcome! Feel free to fork the repository, open issues, or submit pull requests.
+
+## License
+
+This project is licensed under the [MIT License](https://choosealicense.com/licenses/mit/).
+
+
+## Contact
+
+For any inquiries, please reach out to us at: 
+
+
+```
