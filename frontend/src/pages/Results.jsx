@@ -53,7 +53,7 @@ const Results = () => {
       formDataToSend.append("marks", formData.marks);
 
       const response = await fetch(apiUrl, {
-        method: "POST",
+        method: "GET",
         body: formDataToSend,
       });
 
