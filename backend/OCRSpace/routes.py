@@ -1,17 +1,22 @@
 from OCRSpace import API, Engine
 import os
-from typing import List
+import io
 from Database.db_utils import get_db
-from flask import Blueprint, request
+from flask import Blueprint, request, jsonify, json
 import re
 import traceback
-import base64
+from bson import ObjectId
 from flask_jwt_extended import jwt_required, get_jwt_identity
 from werkzeug.utils import secure_filename
 from Agent import EvaluationAgent
 from flask_cors import CORS
+from werkzeug.utils import secure_filename
+from Database.db_utils import get_db
+import re
+from Agent.feedback_agent import FeedbackAgent  # Import the FeedbackAgent class
+from Agent.extraction_agent import ExtractionAgent  # Import the ExtractionAgent
 
-ocr_bp = Blueprint("ocr_bp", __name__, url_prefix="/ocr")
+ocr_bp = Blueprint("ocr_bp", __name__,url_prefix="/ocr")
 CORS(ocr_bp)
 OCR_API_KEY = os.getenv("OCR_API_KEY")
 UPLOAD_FOLDER = os.path.join(os.getcwd(), "uploads")  # Define the upload folder
@@ -87,8 +92,3 @@ def test_ocr_agent():
 
     except Exception:
         return {"message": "Error: " + traceback.format_exc()}, 500
-
-
-@ocr_bp.route("/bulk", methods=["POST"])
-def post_image_bulk(image_paths: List[str]) -> dict:
-    pass

@@ -35,14 +35,13 @@ def authenticate_user(email: str, password: str) -> dict:
 
 
 def create_teacher_user(
-    username: str, password: str, email: str, teacher_id: str
+    username: str, password: str, email: str
 ) -> dict:
     try:
         db = get_db()
         db.Users.create_index([("email", ASCENDING)], unique=True)
         result = db.Users.insert_one(
             {
-                "teacher_id": teacher_id,
                 "username": username,
                 "email": email,
                 "password": password_context.hash(password),
@@ -61,14 +60,13 @@ def create_teacher_user(
 
 
 def create_student_user(
-    username: str, password: str, email: str, student_id: str
+    username: str, password: str, email: str
 ) -> dict:
     try:
         db = get_db()
         db.Users.create_index([("email", ASCENDING)], unique=True)
         user = db.Users.insert_one(
             {
-                "student_id": student_id,
                 "username": username,
                 "email": email,
                 "password": password_context.hash(password),

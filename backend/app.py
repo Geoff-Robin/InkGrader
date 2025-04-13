@@ -5,7 +5,6 @@ from datetime import timedelta
 from flask_jwt_extended import JWTManager,jwt_required,get_jwt
 from OCRSpace.routes import ocr_bp
 from Auth.routes import auth_bp
-from Database.routes import db_bp
 from flask_cors import CORS
 
 
@@ -45,7 +44,6 @@ def not_found(error):
 if __name__ == "__main__":
     app.register_blueprint(ocr_bp)
     app.register_blueprint(auth_bp)
-    app.register_blueprint(db_bp)
     load_dotenv()
     JWT_SECRET_KEY = os.getenv("JWT_SECRET_KEY")
 
@@ -58,5 +56,6 @@ if __name__ == "__main__":
     app.config["JWT_REFRESH_TOKEN_EXPIRES"] = timedelta(minutes=120)
     app.config["JWT_SECRET_KEY"] = JWT_SECRET_KEY
     app.config["DEBUG"] = True
-    app.config["PORT"] = os.getenv("PORT", 3000)
+    app.config["PORT"] = os.getenv("PORT", 5000)
+    app.config["HOST"] = os.getenv("HOST",'127.0.0.1')
     app.run()

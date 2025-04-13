@@ -21,13 +21,9 @@ def register():
         username = data.get("username")
         password = data.get("password")
         email = data.get("email")
-        teacher_id = data.get("teacher_id")
-        student_id = data.get("student_id")
         response = None
-        if teacher_id:
-            response = create_teacher_user(username, password, email, teacher_id)
-        if student_id:
-            response = create_student_user(username, password, email, student_id)
+        if email:
+            response = create_teacher_user(username, password, email)
         if response["message"].startswith("DuplicateKeyError") or response[
             "message"
         ].startswith("OperationFailure"):

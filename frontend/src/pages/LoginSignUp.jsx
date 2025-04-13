@@ -1,8 +1,9 @@
 // AuthPage.jsx
 import { useState } from 'react'
 import '../brutalist.css'
-
+import { useNavigate } from 'react-router-dom'
 function LoginSignUp() {
+  const navigate = useNavigate()
   const [activeTab, setActiveTab] = useState('login')
   const [loginForm, setLoginForm] = useState({
     email: '',
@@ -36,7 +37,7 @@ function LoginSignUp() {
     e.preventDefault()
     // Here you would add your authentication logic
     console.log('Login form submitted:', loginForm)
-    alert(`Login attempted with: ${loginForm.email}`)
+    navigate('/home')
   }
   
   const handleSignupSubmit = (e) => {
@@ -48,6 +49,7 @@ function LoginSignUp() {
     // Here you would add your registration logic
     console.log('Signup form submitted:', signupForm)
     alert(`Account created for: ${signupForm.email}`)
+    navigate('/home')
   }
   
   return (
