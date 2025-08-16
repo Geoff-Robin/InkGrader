@@ -5,12 +5,12 @@ import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import Navbar from "@/components/navbar"
 import { ThemeProvider as NextThemesProvider } from "next-themes"
-import { Footer } from "@/components/ui/footer"
+import { SiteFooter } from "@/components/ui/footer"
 
 export const metadata: Metadata = {
-  title: "v0 App",
-  description: "Created with v0",
-  generator: "v0.app",
+  title: "InkGrader",
+  description: "Created with InkGrader",
+  generator: "InkGrader",
 }
 
 export default function RootLayout({
@@ -20,22 +20,15 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        <style>{`
-html {
-  font-family: ${GeistSans.style.fontFamily};
-  --font-sans: ${GeistSans.variable};
-  --font-mono: ${GeistMono.variable};
-}
-        `}</style>
-      </head>
-      <body>
+
+      <body className="flex flex-col">
         <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <Navbar />
-          {children}
-          <Footer/>
+            <Navbar />
+            {children}
+          <SiteFooter />
         </NextThemesProvider>
       </body>
-    </html>
+
+    </html >
   )
 }
