@@ -20,15 +20,17 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-
       <body className="flex flex-col">
-        <NextThemesProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-            <Navbar />
-            {children}
+        <NextThemesProvider
+          attribute="class"
+          defaultTheme="dark"
+          enableSystem={false}
+        >
+          <Navbar />
+          {children}
           <SiteFooter />
         </NextThemesProvider>
       </body>
-
-    </html >
+    </html>
   )
 }
