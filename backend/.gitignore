@@ -8,6 +8,7 @@ db.sqlite3
 *.log
 *.pot
 .env
+.venv
 *.png
 /.pytest_cache/
 __pycache__
