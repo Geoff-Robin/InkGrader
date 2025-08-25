@@ -1,6 +1,5 @@
 // app/login/layout.tsx
-import Navbar from "@/components/navbar";
-import { SiteFooter } from "@/components/ui/footer";
+"use client"
 import React from "react";
 
 export const metadata = {

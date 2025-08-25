@@ -1,11 +1,10 @@
 import type React from "react"
 import type { Metadata } from "next"
-import { GeistSans } from "geist/font/sans"
-import { GeistMono } from "geist/font/mono"
 import "./globals.css"
 import Navbar from "@/components/navbar"
-import { ThemeProvider as NextThemesProvider } from "next-themes"
 import { SiteFooter } from "@/components/ui/footer"
+import { ThemeProvider as NextThemesProvider } from "next-themes"
+import { AuthContextProvider } from "@/lib/authContext" // import your context
 
 export const metadata: Metadata = {
   title: "InkGrader",
@@ -26,9 +25,11 @@ export default function RootLayout({
           defaultTheme="dark"
           enableSystem={false}
         >
-          <Navbar />
-          {children}
-          <SiteFooter />
+          <AuthContextProvider>
+            <Navbar />
+            {children}
+            <SiteFooter />
+          </AuthContextProvider>
         </NextThemesProvider>
       </body>
     </html>
