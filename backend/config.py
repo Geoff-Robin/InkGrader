@@ -1,5 +1,6 @@
 from fastapi import WebSocket
 import asyncio
+import os
 
 class ConnectionManager:
     def __init__(self):
@@ -17,7 +18,9 @@ class ConnectionManager:
             await ws.send_json(message)
 
 origins = [
-    "http://localhost:5173"
+    "http://localhost:5173",
+    "http://localhost:3000",
+    os.getenv("DEPLOYED_FRONTEND_URL")
 ]
 REFRESH_TOKEN_BLOCKLIST = set()
 
