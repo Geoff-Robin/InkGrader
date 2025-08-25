@@ -72,6 +72,16 @@ async def login(user:LoginReqModel,response:Response,request:Request) -> Respons
             "message": f"An unexpected error occurred: {str(e)}"
         }
         
+@auth_router.get("/verify", summary="Confirm user")
+async def get_current_user(request: Request, response: Response,user= Depends(get_current_user)):
+    try:
+        return {
+            "message": "User confirmed"
+        }
+    except Exception as e:
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        return {"message": f"An unexpected error occurred: {str(e)}"}
+        
 @auth_router.get("/refresh", summary="Refresh access token")
 async def refresh_token(request: Request, response: Response):
     auth = request.headers.get("Authorization")
