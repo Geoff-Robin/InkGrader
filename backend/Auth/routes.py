@@ -82,14 +82,10 @@ async def get_current_user(request: Request, response: Response,user= Depends(ge
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         return {"message": f"An unexpected error occurred: {str(e)}"}
         
-@auth_router.get("/refresh", summary="Refresh access token")
-async def refresh_token(request: Request, response: Response):
-    auth = request.headers.get("Authorization")
-    if not auth or not auth.startswith("Bearer "):
-        response.status_code = status.HTTP_401_UNAUTHORIZED
-        return {"message": "Missing or malformed Authorization header"}
+@auth_router.post("/refresh", summary="Refresh access token")
+async def refresh_token(refresh_token: RefreshTokenReqModel,request: Request, response: Response):
 
-    token = auth.split(" ", 1)[1]
+    token = refresh_token.refresh_token
 
     if token.count(".") != 2:
         response.status_code = status.HTTP_401_UNAUTHORIZED

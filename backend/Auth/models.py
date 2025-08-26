@@ -53,3 +53,18 @@ class LoginReqModel(BaseModel):
             ]
         }
     }
+    
+class RefreshTokenReqModel(BaseModel):
+    """
+    Model for user refresh token request containing refresh token.
+    """
+    refresh_token :str
+    model_config = {
+        "json_schema_extra":{
+            "examples" : [
+                {
+                    "refresh_token": "dsgnksdnbngq"
+                }
+            ]
+        }
+    }

@@ -202,7 +202,7 @@ async def exam_socket(websocket: WebSocket):
         await pubsub.close()
         print(f"WebSocket connection for user {user_id} closed.")
         
-@exam_router.get("/list")
+@exam_router.get("/")
 async def get_exam_list(
     request: Request,
     user=Depends(get_current_user),
@@ -213,7 +213,7 @@ async def get_exam_list(
     returned_exams = []
     for exam in exams:
         e = {
-            "_id": str(exam["_id"]),
+            "id": str(exam["_id"]),
             "exam_name": exam["exam_name"],
         }
         returned_exams.append(e)

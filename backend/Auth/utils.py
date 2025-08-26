@@ -15,6 +15,7 @@ from fastapi import Depends, HTTPException, status, Request
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
 import datetime
+from typing import Literal
 from jose.exceptions import ExpiredSignatureError
 from jwt.exceptions import InvalidTokenError
 
@@ -64,7 +65,7 @@ async def get_user_by_id(db, _id: ObjectId):
     except Exception as e:
         return None
 
-async def verify_refresh_token(token: str) -> bool:
+async def verify_refresh_token(token: str) -> str|Literal[False]:
     """
     Verify the refresh token.
     Args:
@@ -75,8 +76,8 @@ async def verify_refresh_token(token: str) -> bool:
     try:
         payload = jwt.decode(token, JWT_REFRESH_SECRET_KEY, algorithms=[ALGORITHM])
         if token in REFRESH_TOKEN_BLOCKLIST:
-            return False
-        return payload.get("sub") is not None
+            return None
+        return payload.get("sub") if payload.get("sub") else False
     except (InvalidTokenError, ExpiredSignatureError):
         return False
 
@@ -100,7 +101,7 @@ async def create_access_token(
             datetime.timezone.utc
         ) + datetime.timedelta(minutes=ACCESS_TOKEN_EXPIRE_MINUTES)
     to_encode = {"exp": expires_delta, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, JWT_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
@@ -125,7 +126,7 @@ async def create_refresh_token(
         ) + datetime.timedelta(minutes=REFRESH_TOKEN_EXPIRE_MINUTES)
 
     to_encode = {"exp": expires_delta, "sub": str(subject)}
-    encoded_jwt = jwt.encode(to_encode, JWT_REFRESH_SECRET_KEY, ALGORITHM)
+    encoded_jwt = jwt.encode(to_encode, JWT_REFRESH_SECRET_KEY, algorithm=ALGORITHM)
     return encoded_jwt
 
 
