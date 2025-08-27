@@ -1,170 +1,87 @@
 "use client"
 
-import React, { useState } from 'react';
-import { ChevronLeft, ChevronRight, FileText } from 'lucide-react';
-import { Card } from '@/components/ui/card';
+import React, { useEffect, useState } from 'react';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { ExamCard } from '@/components/examCard';
+import { useAxiosPrivate } from '@/axios';
+import { useRouter } from 'next/navigation';
+import { 
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog';
+import Navbar from '@/components/navbar';
+import { SiteFooter } from '@/components/ui/footer';
 
-export default function GradingDashboard(){
+export default function GradingDashboard() {
+  type Exam = { id: string; exam_name: string };
+  const axiosPrivate = useAxiosPrivate();
   const [currentPage, setCurrentPage] = useState(1);
-
-  const allExams = [
-    { 
-      id: 1, 
-      examName: 'Mathematics Midterm', 
-      studentName: 'John Smith', 
-      submittedDate: '2024-03-15'
-    },
-    { 
-      id: 2, 
-      examName: 'Physics Quiz #3', 
-      studentName: 'Emily Johnson', 
-      submittedDate: '2024-03-14'
-    },
-    { 
-      id: 3, 
-      examName: 'Chemistry Final', 
-      studentName: 'Michael Brown', 
-      submittedDate: '2024-03-13'
-    },
-    { 
-      id: 4, 
-      examName: 'Biology Test', 
-      studentName: 'Sarah Wilson', 
-      submittedDate: '2024-03-12'
-    },
-    { 
-      id: 5, 
-      examName: 'English Literature', 
-      studentName: 'David Martinez', 
-      submittedDate: '2024-03-11'
-    },
-    { 
-      id: 6, 
-      examName: 'History Essay', 
-      studentName: 'Lisa Anderson', 
-      submittedDate: '2024-03-10'
-    },
-    { 
-      id: 7, 
-      examName: 'Computer Science', 
-      studentName: 'Robert Taylor', 
-      submittedDate: '2024-03-09'
-    },
-    { 
-      id: 8, 
-      examName: 'Spanish Oral Test', 
-      studentName: 'Maria Garcia', 
-      submittedDate: '2024-03-08'
-    },
-    { 
-      id: 9, 
-      examName: 'Statistics Quiz', 
-      studentName: 'James Lee', 
-      submittedDate: '2024-03-07'
-    },
-    { 
-      id: 10, 
-      examName: 'Art History', 
-      studentName: 'Anna White', 
-      submittedDate: '2024-03-06'
-    },
-    { 
-      id: 11, 
-      examName: 'Philosophy Ethics', 
-      studentName: 'Thomas Clark', 
-      submittedDate: '2024-03-05'
-    },
-    { 
-      id: 12, 
-      examName: 'Economics Final', 
-      studentName: 'Jennifer Davis', 
-      submittedDate: '2024-03-04'
-    },
-    { 
-      id: 13, 
-      examName: 'Psychology Test', 
-      studentName: 'Kevin Rodriguez', 
-      submittedDate: '2024-03-03'
-    },
-    { 
-      id: 14, 
-      examName: 'Music Theory', 
-      studentName: 'Rachel Green', 
-      submittedDate: '2024-03-02'
-    },
-    { 
-      id: 15, 
-      examName: 'Sociology Essay', 
-      studentName: 'Daniel Miller', 
-      submittedDate: '2024-03-01'
-    },
-    { 
-      id: 16, 
-      examName: 'Geography Quiz', 
-      studentName: 'Ashley Moore', 
-      submittedDate: '2024-02-28'
-    },
-    { 
-      id: 17, 
-      examName: 'Political Science', 
-      studentName: 'Christopher Hall', 
-      submittedDate: '2024-02-27'
-    },
-    { 
-      id: 18, 
-      examName: 'Environmental Science', 
-      studentName: 'Michelle Young', 
-      submittedDate: '2024-02-26'
-    },
-  ];
+  const [exams, setExams] = useState<Exam[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null); 
+  const router = useRouter();
 
   const examsPerPage = 9;
-  const totalPages = Math.ceil(allExams.length / examsPerPage);
-  
+  const totalPages = Math.ceil(exams.length / examsPerPage);
+
   const getCurrentPageExams = () => {
+    if (!exams || exams.length === 0) return [];
     const startIndex = (currentPage - 1) * examsPerPage;
-    const endIndex = startIndex + examsPerPage;
-    return allExams.slice(startIndex, endIndex);
+    return exams.slice(startIndex, startIndex + examsPerPage);
   };
 
-  const handlePrevPage = () => {
-    setCurrentPage(prev => Math.max(prev - 1, 1));
+  const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
+  const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
+
+  const fetchData = async () => {
+    try {
+      const response = await axiosPrivate.get('/exam');
+      setExams(response.data.exams);
+    }catch(err: any){
+      console.error(err)
+    }
   };
 
-  const handleNextPage = () => {
-    setCurrentPage(prev => Math.min(prev + 1, totalPages));
-  };
+  useEffect(() => {
+    const FetchData = async () => {
+      await fetchData(); 
+    };
+    FetchData();
+  }, []);
+
+  if (error) {
+    return (
+      <AlertDialog open>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Error</AlertDialogTitle>
+            <AlertDialogDescription>{error}</AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogAction onClick={() => router.replace('/login')}>
+              Go back to website
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    );
+  }
 
   const currentExams = getCurrentPageExams();
 
   return (
     <div className="flex flex-col h-full">
+      <Navbar/>
       {/* Cards Grid */}
       <div className="flex-1 p-6 overflow-auto">
-        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 h-full">
+        <div className="grid grid-cols-3 grid-rows-3 md:grid-cols-2 xl:grid-cols-3 gap-6 h-full">
           {currentExams.map((exam) => (
-            <Card key={exam.id} className="bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
-              <div className="p-6 h-full flex flex-col">
-                {/* Header */}
-                <div className="flex items-start justify-between mb-4">
-                  <div className="flex items-center gap-2">
-                    <FileText className="h-5 w-5 text-primary" />
-                  </div>
-                </div>
-
-                {/* Exam Info */}
-                <div className="flex-1 flex items-center justify-center">
-                  <h3 className="font-semibold text-foreground text-center group-hover:text-primary transition-colors">
-                    {exam.examName}
-                  </h3>
-                </div>
-
-                {/* Action Area */}
-                <div className="text-xs text-muted-foreground text-center group-hover:text-primary transition-colors">
-                  Check Results
-                </div>
-              </div>
-            </Card>
+            <ExamCard key={exam.id} exam={exam} />
           ))}
         </div>
       </div>
@@ -180,7 +97,7 @@ export default function GradingDashboard(){
             <ChevronLeft className="h-4 w-4 mr-1" />
             Previous
           </button>
-          
+
           <div className="flex items-center space-x-1">
             {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
               <button
@@ -196,7 +113,7 @@ export default function GradingDashboard(){
               </button>
             ))}
           </div>
-          
+
           <button
             onClick={handleNextPage}
             disabled={currentPage === totalPages}
@@ -207,6 +124,7 @@ export default function GradingDashboard(){
           </button>
         </div>
       </div>
+      <SiteFooter/>
     </div>
   );
-};
+}

@@ -1,7 +1,7 @@
 "use client"
 import React from "react";
 
-export const metadata = {
+const metadata = {
   title: "Register - InkGrader",
   description: "Register to access InkGrader and manage your grading tasks.",
 };

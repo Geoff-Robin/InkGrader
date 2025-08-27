@@ -1,20 +1,24 @@
 "use client"
-
 import { Button } from "@/components/ui/button"
-import { LogIn, LogOut } from "lucide-react"
+import { LogIn, LogOut, Plus } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 
 export default function Navbar() {
   const pathname = usePathname()
-
-  // Routes where we want to show Login
   const authPages = ["/", "/login", "/register"]
   const showLogin = authPages.includes(pathname)
   const router = useRouter()
+  
   const handleLogout = async()=>{
-
+    try{
+      sessionStorage.removeItem("accessToken");
+      sessionStorage.removeItem("refreshToken")
+      router.replace("/")
+    }catch(err: any){
+      console.error("did not navigate")
+    }
   }
 
   return (
@@ -28,11 +32,19 @@ export default function Navbar() {
               <h1 className="text-xl font-semibold text-foreground">InkGrader</h1>
             </div>
           </Link>
-
+          
           {/* Navigation Items */}
           <div className="flex items-center gap-4">
+            
             {pathname !== "/" && <ThemeToggle />}
 
+            {pathname === "/dashboard" && (
+              <Button onClick={() => router.push("/exam/form")} className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Exam
+              </Button>
+            )}
+            
             {showLogin ? (
               <Link href="/login">
                 <Button className="flex items-center gap-2">
@@ -41,7 +53,7 @@ export default function Navbar() {
                 </Button>
               </Link>
             ) : (
-              <Button className="flex items-center gap-2" onClick={() => {handleLogout}}>
+              <Button variant="destructive" className="flex items-center gap-2" onClick={async() => {handleLogout()}}>
                 <LogOut className="h-4 w-4" />
                 Logout
               </Button>

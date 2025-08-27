@@ -4,7 +4,7 @@ import axios from "axios";
 import { useContext, useEffect } from "react";
 import { AuthContext } from "@/lib/authContext"; // Adjust path as necessary
 
-//const API_URL = "http://127.0.0.1:8000/api/";
+
 const isDevelopment=process.env.NEXT_PUBLIC_VERCEL_ENV==='development'
 const API_URL=isDevelopment? process.env.NEXT_PUBLIC_API_BASE_URL_LOCAL :process.env.NEXT_PUBLIC_API_BASE_URL_DEPLOY
 export const axiosInstance = axios.create({
@@ -32,12 +32,12 @@ async function refreshAccessToken(setAccessToken) {
     }
 
     const response = await axios.post(
-      `${API_URL}token/refresh/`,
-      { refresh: refreshToken }, // Send the refresh token in the body
+      `${API_URL}auth/refresh/`,
+      { refresh_token: refreshToken }, 
       { withCredentials: true }
     );
-    const newAccessToken = response?.data?.access;
-    const newRefreshToken = response?.data?.refresh; // You can choose to update the refresh token if necessary
+    const newAccessToken = response?.data?.access_token;
+    const newRefreshToken = response?.data?.refresh_token;
 
     if (newAccessToken) {
       setAccessToken(newAccessToken);
