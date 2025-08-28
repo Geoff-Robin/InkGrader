@@ -27,4 +27,16 @@ class SubmitRagFileForm:
     ):
         self.exam_name = exam_name
         self.rag_material = rag_material
-    
+
+class CreateExamForm:
+    def __init__(
+        self,
+        exam_name: Annotated[str,Form(...)],
+        exam_questions: Annotated[UploadFile,File(...)],
+        student_answers: Annotated[List[UploadFile],File(...)],
+        rag_material: Annotated[UploadFile,File(...)]
+    ):
+        self.exam_name = exam_name
+        self.exam_questions = exam_questions
+        self.student_answers = student_answers
+        self.rag_material = rag_material

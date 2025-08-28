@@ -23,7 +23,7 @@ from FileProcessor.helpers import *
 
 
 async def extract_and_save_questions(
-    form: SubmitQuestionForm, db: Database, user_id: ObjectId
+    form: CreateExamForm, db: Database, user_id: ObjectId
 ):
     """
     Extracts questions from the uploaded exam file (PDF or TXT), processes them,
@@ -81,7 +81,7 @@ def extract_text_from_pdf(pdf_bytes: BytesIO) -> str:
 
 
 async def process_rag_material(
-    form: SubmitRagFileForm, db: Database, user_id: ObjectId
+    form: CreateExamForm, db: Database, user_id: ObjectId
 ):
     """
     Processes RAG material from the uploaded file, splits and embeds text,

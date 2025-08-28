@@ -9,7 +9,7 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
 import asyncio
-from config import running_tasks, task_lock
+from config import running_tasks
 from config import origins
 from Auth.routes import auth_router
 from routes import exam_router
