@@ -5,21 +5,17 @@ from fastapi import (
     Depends,
     WebSocket,
     WebSocketDisconnect,
+    BackgroundTasks
 )
 from redis_pubsub import PubSubManager
 import asyncio
 from models import *
 from Auth.utils import get_current_user
-from FileProcessor.utils import (
-    extract_and_save_questions,
-    process_rag_material,
-    extract_and_save_answers,
-)
 from Auth.utils import ALGORITHM, JWT_SECRET_KEY
 from jwt import decode as jwt_decode, PyJWTError
 from config import ConnectionManager, running_tasks, task_lock
 from bson import ObjectId
-from Agents import grading_task
+from grading_task import grading_task
 
 exam_router = APIRouter()
 conn_manager = ConnectionManager()
@@ -27,38 +23,42 @@ conn_manager = ConnectionManager()
 
 @exam_router.post("/form")
 async def create_exam_form(
+    background_tasks: BackgroundTasks,
     request: Request,
     response: Response,
     user=Depends(get_current_user),
-    form: CreateExamForm = Depends()
+    form: CreateExamForm = Depends(),
 ):
-    await extract_and_save_questions(
-        db=request.app.database, form=form, user_id=user["_id"]
+    questions_cursor = await request.app.database["Questions"].find_one({"user_id": user["_id"], "exam_name": form.exam_name})
+    if questions_cursor:
+        return{
+            "message": "Exam form already exists",
+        }
+    question_info = QuestionInfo(
+        file_name=form.questions.filename,
+        questions=BytesIO(await form.questions.read())
     )
-    for file in form.student_answers:
-        await extract_and_save_answers(
-            db=request.app.database,
-            exam_name=form.exam_name,
-            user_id=user["_id"],
-            file=file,
-        )
-    await process_rag_material(
-        db=request.app.database, form=form, user_id=user["_id"]
+    answers_info=[]
+    for student_answers in form.student_answers:
+        answers_info.append(AnswerInfo(
+            file_name=student_answers.filename,
+            student_answers=BytesIO(await student_answers.read())
+        ))
+    rag_file_info = RagFileInfo(
+        file_name=form.rag_material.filename,
+        rag_material=BytesIO(await form.rag_material.read())
     )
-    find_result = await request.app.database["Questions"].find_one(
-        {"exam_name": form.exam_name, "user_id": user["_id"]}
-    )
+
     task_key = f"{user['_id']}:{form.exam_name}"
-    async with task_lock:
-        if task_key not in running_tasks:
-            task = asyncio.create_task(
-                grading_task(
-                    db=request.app.database,
-                    exam_id=str(find_result["_id"]),
-                    user_id=ObjectId(user["_id"]),
-                )
-            )
-            running_tasks[task_key] = task
+    grading_task_args= GradingTaskArgs(
+        question_info=question_info,
+        answers_info=answers_info,
+        rag_file_info=rag_file_info,
+        user_id=ObjectId(user["_id"]),
+        db=request.app.database,
+        exam_name=form.exam_name
+    )
+    background_tasks.add_task(grading_task, grading_task_args=grading_task_args)
     response.status_code = 201
     return {"message": "Exam created successfully"}
 
@@ -124,9 +124,6 @@ async def exam_socket(websocket: WebSocket):
         await websocket.close(code=1000, reason="WebSocket connection cancelled")
         print(f"WebSocket connection for user {user_id} cancelled.")
     finally:
-        async with task_lock:
-            if grading_process_key in running_tasks:
-                running_tasks.pop(grading_process_key, None)
         await pubsub.close()
         print(f"WebSocket connection for user {user_id} closed.")
         

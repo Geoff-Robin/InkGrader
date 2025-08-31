@@ -23,29 +23,27 @@ from FileProcessor.helpers import *
 
 
 async def extract_and_save_questions(
-    form: CreateExamForm, db: Database, user_id: ObjectId
+    question_info: QuestionInfo, db: Database, **kwargs
 ):
     """
     Extracts questions from the uploaded exam file (PDF or TXT), processes them,
     and saves the extracted questions to the database.
 
     Args:
-        form (ExamForm): The form containing the exam questions file.
+        question_info (QuestionInfo): Contains question filename and question file bytes
         db (Database): The MongoDB database instance.
-        user_id (ObjectId): The user's unique identifier.
+        **kwargs: Contains user_id (ObjectId) and exam_name (str)
 
     Returns:
         None
     """
-    questions_filename = form.questions.filename
-    questions_file = BytesIO(await form.questions.read())
     questions = ""
-    if questions_filename.endswith(".txt"):
-        questions = questions_file.getvalue().decode("utf-8")
+    if question_info.file_name.endswith(".txt"):
+        questions = question_info.questions.getvalue().decode("utf-8")
         extraction_agent = ExtractionAgent()
         extracted_questions = await extraction_agent.extract_questions(questions)
-    elif questions_filename.endswith(".pdf"):
-        reader = PdfReader(questions_file)
+    elif question_info.file_name.endswith(".pdf"):
+        reader = PdfReader(question_info.questions)
         for page in reader.pages:
             if file_type(page) == FileContentType.IMG:
                 ocr_engine2 = OcrAPI(
@@ -58,8 +56,8 @@ async def extract_and_save_questions(
     extraction_agent = ExtractionAgent()
     extracted_questions = await extraction_agent.extract_questions(questions)
     await save_questions_in_db(
-        user_id=user_id,
-        exam_name=form.exam_name,
+        user_id=kwargs.get("user_id"),
+        exam_name=kwargs.get("exam_name"),
         questions=extracted_questions,
         db=db,
     )
@@ -81,21 +79,24 @@ def extract_text_from_pdf(pdf_bytes: BytesIO) -> str:
 
 
 async def process_rag_material(
-    form: CreateExamForm, db: Database, user_id: ObjectId
+    rag_file_info: RagFileInfo, db: Database, **kwargs
 ):
     """
     Processes RAG material from the uploaded file, splits and embeds text,
     and creates a FAISS index for semantic search.
 
     Args:
-        form (ExamForm): The form containing the RAG material file.
-        index_name (str, optional): The name for the FAISS index file.
+        rag_file_info (RagFileInfo): Contains rag file name and bytes.
+        db (Database): The MongoDB database instance.
+        user_id (ObjectId): The user's unique identifier.
 
     Returns:
         None
     """
-    data = BytesIO(await form.rag_material.read())
-    fname = form.rag_material.filename.lower()
+    user_id = kwargs.get("user_id")
+    exam_name = kwargs.get("exam_name")
+    data = rag_file_info.rag_material
+    fname = rag_file_info.file_name.lower()
     if fname.endswith(".pdf"):
         content = extract_text_from_pdf(data)
     elif fname.endswith(".txt"):
@@ -111,7 +112,7 @@ async def process_rag_material(
     assert len(chunks) == len(embeddings), "Mismatch between chunks and embeddings"
     
     fetch_results = await db["Questions"].find_one({
-        "exam_name": form.exam_name,
+        "exam_name": exam_name,
         "user_id": user_id
     })
     await db["Chunks"].insert_one(
@@ -123,50 +124,52 @@ async def process_rag_material(
     embeddings = np.array(embeddings, dtype="float32")
     index.add(embeddings)
     os.makedirs("faiss_indexes", exist_ok=True)
-    index_name = f"{fetch_results["_id"]}_{str(user_id)}.faiss"
+    index_name = f"{fetch_results['_id']}_{str(user_id)}.faiss"
     path = os.path.join("faiss_indexes", index_name)
     faiss.write_index(index, path)
 
 
 async def extract_and_save_answers(
-    exam_name: str,
-    file: Annotated[UploadFile, File(...)],
     db: Database,
-    user_id: ObjectId,
+    answer_info: AnswerInfo,
+    **kwargs
 ):
     """
-    Extracts answers from the uploaded RAG material file (PDF or TXT), processes them,
+    Extracts answers from the uploaded answer file (PDF or TXT), processes them,
     and saves the extracted answers to the database.
 
     Args:
-        form (ExamForm): The form containing the RAG material file.
+        answer_info (AnswerInfo): Contains answer file name and bytes.
         db (Database): The MongoDB database instance.
-        user_id (ObjectId): The user's unique identifier.
+        **kwargs: Contains user_id (ObjectId) and exam_name (str)
 
     Returns:
         None
     """
-    data = BytesIO(await file.read())
-    filename = file.filename.lower()
+    user_id = kwargs.get("user_id")
+    exam_name = kwargs.get("exam_name")
     answers = ""
-    if filename.endswith(".txt"):
-        answers = data.getvalue().decode("utf-8")
-    elif filename.endswith(".pdf"):
-        reader = PdfReader(data)
-        for page in reader.pages:
-            if file_type(page) == FileContentType.IMG:
-                ocr_engine2 = OcrAPI(
-                    engine=Engine.ENGINE_2, api_key=os.getenv("OCR_API_KEY")
-                )
-                image_b64 = extract_image_base64(page)
-                answers += ocr_engine2.ocr_base64(image_b64)
-            elif file_type(page) == FileContentType.TEXT:
-                answers += page.extract_text()
+    for answer_bytes in answer_info.student_answers:
+        data = BytesIO(answer_bytes)
+        filename = answer_info.file_name.lower()
+        if filename.endswith(".txt"):
+            answers += data.getvalue().decode("utf-8")
+        elif filename.endswith(".pdf"):
+            reader = PdfReader(data)
+            for page in reader.pages:
+                if file_type(page) == FileContentType.IMG:
+                    ocr_engine2 = OcrAPI(
+                        engine=Engine.ENGINE_2, api_key=os.getenv("OCR_API_KEY")
+                    )
+                    image_b64 = extract_image_base64(page)
+                    answers += ocr_engine2.ocr_base64(image_b64)
+                elif file_type(page) == FileContentType.TEXT:
+                    answers += page.extract_text()
     extraction_agent = ExtractionAgent()
-    questions = db["Questions"].find({"user_id": user_id, "exam_name": exam_name})
+    questions_cursor = await db["Questions"].find_one({"user_id": user_id, "exam_name": exam_name})
     query = "Question Paper:\n"
-    for question in questions:
-        query += question["question_id"] + " " + question["question"] + "\n"
+    for question in questions_cursor["questions"]:
+        query += str(question["question_id"]) + " " + question["question"] + "\n"
     query += "\nAnswer Body to be extracted\n\n" + answers
     extracted_answers = await extraction_agent.extract_answers(query)
     find_result = await db["Questions"].find_one({
@@ -174,5 +177,5 @@ async def extract_and_save_answers(
         "user_id": user_id
     })
     await save_answers_in_db(
-        user_id=user_id, exam_id=find_result["_id"], answers=extracted_answers, db=db,file_name=filename
+        user_id=user_id, exam_id=find_result["_id"], answers=extracted_answers, db=db, file_name=filename
     )

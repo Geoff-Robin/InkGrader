@@ -11,9 +11,8 @@ class ExtractionAgent:
         self._agent_settings = {
             "temperature": 0.2
         }
-        self._API_KEY = os.getenv("GROQ_API_KEY")
-        self._deps = ExtractionAgentDeps(api_key=self._API_KEY, http_client=AsyncClient)
-    
+        self._deps = ExtractionAgentDeps(api_key=os.getenv("GROQ_API_KEY"), http_client=AsyncClient)
+
     async def extract_questions(self,questions: str)->List[QuestionExtractionModel]:
         self._agent = Agent(
             model='groq:moonshotai/kimi-k2-instruct',

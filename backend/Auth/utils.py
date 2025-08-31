@@ -74,7 +74,7 @@ async def verify_refresh_token(token: str) -> str|Literal[False]:
         bool: True if the token is valid, False otherwise.
     """
     try:
-        payload = jwt.decode(token, JWT_REFRESH_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_REFRESH_SECRET_KEY, ALGORITHM)
         if token in REFRESH_TOKEN_BLOCKLIST:
             return None
         return payload.get("sub") if payload.get("sub") else False
@@ -216,7 +216,7 @@ async def get_current_user(
         headers={"WWW-Authenticate": "Bearer"},
     )
     try:
-        payload = jwt.decode(token, JWT_SECRET_KEY, algorithms=[ALGORITHM])
+        payload = jwt.decode(token, JWT_SECRET_KEY, ALGORITHM)
         _id = ObjectId(payload.get("sub"))
         if _id is None:
             raise credentials_exception

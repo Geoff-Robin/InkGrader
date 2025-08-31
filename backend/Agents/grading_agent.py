@@ -18,16 +18,15 @@ class GradingAgent:
     def __init__(self, exam_id: str, user_id: ObjectId, db: Database):
         logger.info(f"Initializing GradingAgent for exam_id={exam_id}, user_id={user_id}")
         self._agent_settings = {"temperature": 0.2}
-        self._API_KEY = os.getenv("GROQ_API_KEY")
         self.deps = GradingAgentDeps(
-            api_key=self._API_KEY,
+            api_key=os.getenv("GROQ_API_KEY"),
             http_client=AsyncClient,
             exam_id=exam_id,
             user_id=str(user_id),
             db=db
         )
         self.agent = Agent(
-            model='groq:moonshotai/kimi-k2-instruct',
+            model='groq:openai/gpt-oss-20b',
             system_prompt=GRADING_AGENT_PROMPT,
             model_settings=self._agent_settings,
             deps_type=GradingAgentDeps,

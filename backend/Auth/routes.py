@@ -1,7 +1,7 @@
 from fastapi import APIRouter,Response,Request,status
 from pymongo.errors import ConnectionFailure,OperationFailure,DuplicateKeyError
 from jwt import DecodeError
-from backend.Auth.req_models import *
+from Auth.models import *
 from Auth.utils import *
 
 auth_router = APIRouter()
