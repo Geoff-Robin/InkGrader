@@ -21,11 +21,27 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   const pathname = usePathname();
-  const noLayoutRoutes = ["/dashboard"];
+  const noLayoutRoutes = ["/dashboard","/exam"];
   const hideLayout = noLayoutRoutes.some((route) =>
     pathname.startsWith(route)
   );
-
+  if (hideLayout){
+    return(
+      <html lang="en" suppressHydrationWarning>
+        <body className="flex flex-col">
+          <NextThemesProvider
+            attribute="class"
+            defaultTheme="dark"
+            enableSystem={false}
+          >
+            <AuthContextProvider>
+              {children}
+            </AuthContextProvider>
+          </NextThemesProvider>
+        </body>
+      </html>
+    )
+  }
   return (
     <html lang="en" suppressHydrationWarning>
       <body className="flex flex-col">
@@ -35,9 +51,9 @@ export default function RootLayout({
           enableSystem={false}
         >
           <AuthContextProvider>
-            {!hideLayout && <Navbar />}
+            <Navbar />
             {children}
-            {!hideLayout && <SiteFooter />}
+            <SiteFooter />
           </AuthContextProvider>
         </NextThemesProvider>
       </body>
