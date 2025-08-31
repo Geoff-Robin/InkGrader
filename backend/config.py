@@ -23,6 +23,3 @@ origins = [
     os.getenv("DEPLOYED_FRONTEND_URL")
 ]
 REFRESH_TOKEN_BLOCKLIST = set()
-
-running_tasks: dict[str, asyncio.Task] = {}
-task_lock = asyncio.Lock()

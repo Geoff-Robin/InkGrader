@@ -7,13 +7,13 @@ from fastapi import (
     WebSocketDisconnect,
     BackgroundTasks
 )
-from redis_pubsub import PubSubManager
+from redis_stream import StreamManager
 import asyncio
 from models import *
 from Auth.utils import get_current_user
 from Auth.utils import ALGORITHM, JWT_SECRET_KEY
 from jwt import decode as jwt_decode, PyJWTError
-from config import ConnectionManager, running_tasks, task_lock
+from config import ConnectionManager
 from bson import ObjectId
 from grading_task import grading_task
 
@@ -70,8 +70,7 @@ async def exam_socket(websocket: WebSocket):
     if not exam_id:
         await websocket.close(code=1008, reason="Invalid exam ID")
         return
-    pubsub = PubSubManager()
-    await pubsub.connect()
+
     token = websocket.headers.get("Authorization", "").split(" ")[-1]
     try:
         subject = jwt_decode(token, key=JWT_SECRET_KEY, algorithms=[ALGORITHM])
@@ -81,20 +80,30 @@ async def exam_socket(websocket: WebSocket):
     except (PyJWTError, ValueError):
         await websocket.close(code=1008, reason="Invalid token")
         return
+
     grading_process_key = f"{user_id}:{exam_id}"
-    redis_pubsub = await pubsub.subscribe(grading_process_key)
+
+    stream_manager = StreamManager()
+    await stream_manager.connect()
     await conn_manager.connect(websocket, user_id)
 
     try:
+        last_msg = await stream_manager.get_last_message(grading_process_key)
+        if(last_msg["answer_id"] and last_msg["message"] == f"Grading completed for {last_msg['answer_id']}"):
+            answers_cursor = await websocket.app.database["Answers"].find_one({"_id": last_msg["answer_id"]})
+            total_marks = 0
+            for answer in answers_cursor.get("answers", []):
+                total_marks += answer.get("marks", 0)
+            await conn_manager.send_personal_message({"file_name": answers_cursor["file_name"], "total_marks": total_marks}, user_id)
+        last_id = "$" 
         while True:
-            async for message in redis_pubsub.listen():
-                if message["type"] == "message":
-
+            messages = await stream_manager.redis.xread({grading_process_key: last_id}, block=5000, count=1)
+            if not messages:
+                continue
+            for _, msgs in messages:
+                for msg_id, fields in msgs:
                     answers_info_list = websocket.app.database["Answers"].find(
-                        {
-                            "user_id": ObjectId(user_id),
-                            "exam_id": ObjectId(exam_id),
-                        }
+                        {"user_id": ObjectId(user_id), "exam_id": ObjectId(exam_id)}
                     )
                     answers_info_list = await answers_info_list.to_list(length=None)
                     if not answers_info_list:
@@ -102,29 +111,28 @@ async def exam_socket(websocket: WebSocket):
                             {"message": "No answers found for grading"}, user_id
                         )
                         continue
+
                     data = []
                     for answer_info in answers_info_list:
                         total_marks = sum(
-                            answer["marks"]
-                            for answer in answer_info.get("answers", [])
-                            if "marks" in answer
+                            answer.get("marks", 0) for answer in answer_info.get("answers", [])
                         )
                         data.append(
-                            {
-                                "file_name": answer_info["file_name"],
-                                "total_marks": total_marks,
-                            }
+                            {"file_name": answer_info["file_name"], "total_marks": total_marks}
                         )
-                    await conn_manager.send_personal_message({"message": data}, user_id)
+
+                    await conn_manager.send_personal_message({"update": data}, user_id)
+                    last_id = msg_id
+
     except WebSocketDisconnect:
         await conn_manager.disconnect(user_id)
-        await pubsub.close()
+        await stream_manager.close()
     except asyncio.CancelledError:
-        await pubsub.close()
+        await stream_manager.close()
         await websocket.close(code=1000, reason="WebSocket connection cancelled")
         print(f"WebSocket connection for user {user_id} cancelled.")
     finally:
-        await pubsub.close()
+        await stream_manager.close()
         print(f"WebSocket connection for user {user_id} closed.")
         
 @exam_router.get("/")
