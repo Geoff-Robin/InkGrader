@@ -1,7 +1,6 @@
-"use client";
+"use client"
 
 import type React from "react";
-import type { Metadata } from "next";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import { SiteFooter } from "@/components/ui/footer";
@@ -9,12 +8,6 @@ import { ThemeProvider as NextThemesProvider } from "next-themes";
 import { AuthContextProvider } from "@/lib/authContext";
 import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-
-const metadata: Metadata = {
-  title: "InkGrader",
-  description: "Created with InkGrader",
-  generator: "InkGrader",
-};
 
 export default function RootLayout({
   children,

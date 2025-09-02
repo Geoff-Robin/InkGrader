@@ -5,7 +5,7 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { ExamCard } from '@/components/examCard';
 import { useAxiosPrivate } from '@/axios';
 import { useRouter } from 'next/navigation';
-import { 
+import {
   AlertDialog,
   AlertDialogAction,
   AlertDialogContent,
@@ -16,14 +16,14 @@ import {
 } from '@/components/ui/alert-dialog';
 import Navbar from '@/components/navbar';
 import { SiteFooter } from '@/components/ui/footer';
+import axios from 'axios';
 
 export default function GradingDashboard() {
   type Exam = { id: string; exam_name: string };
   const axiosPrivate = useAxiosPrivate();
-  const [currentPage, setCurrentPage] = useState(1);
+  const [currentPage, setCurrentPage] = useState<number>(1);
   const [exams, setExams] = useState<Exam[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null); 
+  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
   const examsPerPage = 9;
@@ -38,21 +38,22 @@ export default function GradingDashboard() {
   const handlePrevPage = () => setCurrentPage(prev => Math.max(prev - 1, 1));
   const handleNextPage = () => setCurrentPage(prev => Math.min(prev + 1, totalPages));
 
-  const fetchData = async () => {
-    try {
-      const response = await axiosPrivate.get('/exam');
-      setExams(response.data.exams);
-    }catch(err: any){
-      console.error(err)
-    }
-  };
-
   useEffect(() => {
     const FetchData = async () => {
-      await fetchData(); 
+      try {
+        const response = await axiosPrivate.get("/exam")
+        setExams(response.data.exams)
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || "Failed to fetch exams")
+        } else {
+          setError("An unexpected error occurred")
+        }
+        console.error(err)
+      }
     };
     FetchData();
-  }, []);
+  }, [axiosPrivate]);
 
   if (error) {
     return (
@@ -76,7 +77,7 @@ export default function GradingDashboard() {
 
   return (
     <div className="flex flex-col h-full">
-      <Navbar/>
+      <Navbar />
       {/* Cards Grid */}
       <div className="flex-1 p-6 overflow-auto">
         <div className="grid grid-cols-3 grid-rows-3 md:grid-cols-2 xl:grid-cols-3 gap-6 h-full">
@@ -103,11 +104,10 @@ export default function GradingDashboard() {
               <button
                 key={page}
                 onClick={() => setCurrentPage(page)}
-                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${
-                  page === currentPage
+                className={`px-3 py-2 text-sm font-medium rounded-md transition-colors ${page === currentPage
                     ? 'bg-primary text-primary-foreground'
                     : 'text-muted-foreground hover:bg-secondary'
-                }`}
+                  }`}
               >
                 {page}
               </button>
@@ -124,7 +124,7 @@ export default function GradingDashboard() {
           </button>
         </div>
       </div>
-      <SiteFooter/>
+      <SiteFooter />
     </div>
   );
 }

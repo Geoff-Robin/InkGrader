@@ -9,13 +9,14 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card"
-import { Alert, AlertDescription, AlertTitle } from "./ui/alert"
+import { Alert, AlertDescription} from "./ui/alert"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { useState, useContext } from "react"
 import { axiosInstance } from "@/axios" // your public axios instance
 import { AuthContext } from "@/lib/authContext"
 import { useRouter } from "next/navigation"
+import axios from "axios"
 
 export function LoginForm({ className, ...props }: React.ComponentProps<"div">) {
   const { setAccessToken, setRefreshToken } = useContext(AuthContext)
@@ -37,9 +38,12 @@ export function LoginForm({ className, ...props }: React.ComponentProps<"div">) 
       setAccessToken(access_token)
       setRefreshToken(refresh_token)
       router.push("/dashboard")
-    } catch (err: any) {
-      const message = err.response?.data?.message || err.message || "Something went wrong";
-      setError(message);
+    } catch (err: unknown) {
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Failed to login");
+      } else {
+        setError("An unexpected error occurred");
+      }
     } finally {
       setLoading(false)
     }

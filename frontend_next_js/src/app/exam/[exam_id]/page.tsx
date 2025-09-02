@@ -1,9 +1,11 @@
+"use client"
+
 import { useParams } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { FileText, TrendingUp, Wifi, WifiOff } from "lucide-react";
+import { FileText, Wifi, WifiOff } from "lucide-react";
 
 type ExamInfo = {
     file_name: string;
@@ -13,7 +15,7 @@ type ExamInfo = {
 const ExamPage = () => {
   const { exam_id } = useParams();
   const [examInfoList, setExamInfoList] = useState<ExamInfo[]>([]);
-  const [isConnected, setIsConnected] = useState(false);
+  const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
     const socket = new WebSocket(`ws://127.0.0.1:8000/exam/${exam_id}`);
@@ -46,8 +48,6 @@ const ExamPage = () => {
       socket.close();
     };
   }, [exam_id]);
-
-  const totalMarks = examInfoList.reduce((sum, exam) => sum + exam.total_marks, 0);
 
   return (
     <div className="min-h-screen bg-background p-6">

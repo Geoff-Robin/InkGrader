@@ -1,8 +1,10 @@
+"use client"
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { useAxiosPrivate } from "@/axios";
+import axios from 'axios';
 
 interface Question {
   question_id: number;
@@ -47,8 +49,12 @@ const QuestionsAnswersDisplay: React.FC = () => {
         setLoading(true);
         const response = await axiosPrivate.get<ExamData>(`/api/exam/${exam_id}/${file_name}`);
         setExamData(response.data);
-      } catch (err: any) {
-        setError(err.response?.data?.message || err.message || 'Failed to fetch exam data');
+      } catch (err: unknown) {
+        if (axios.isAxiosError(err)) {
+          setError(err.response?.data?.message || 'Failed to fetch exam data');
+        } else {
+          setError('An unexpected error occurred');
+        }
         console.error('Error fetching exam data:', err);
       } finally {
         setLoading(false);

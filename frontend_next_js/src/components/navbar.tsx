@@ -4,6 +4,8 @@ import { LogIn, LogOut, Plus } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
+import axios from "axios"
+import Image from "next/image"
 
 export default function Navbar() {
   const pathname = usePathname()
@@ -16,8 +18,12 @@ export default function Navbar() {
       sessionStorage.removeItem("accessToken");
       sessionStorage.removeItem("refreshToken")
       router.replace("/")
-    }catch(err: any){
-      console.error("did not navigate")
+    }catch(err: unknown){
+      if (axios.isAxiosError(err)) {
+        console.error("Logout failed:", err.response?.data?.message || "Unknown error");
+      } else {
+        console.error("Logout failed:", err);
+      }
     }
   }
 
@@ -28,7 +34,7 @@ export default function Navbar() {
           {/* Logo/Brand */}  
           <Link href="/">
             <div className="flex items-center">
-              <img src="/logo.png" alt="InkGrader Logo" className="h-8 w-8 mr-2" />
+              <Image src="/logo.png" alt="InkGrader Logo" className="h-8 w-8 mr-2" width={32} height={32}/>
               <h1 className="text-xl font-semibold text-foreground">InkGrader</h1>
             </div>
           </Link>

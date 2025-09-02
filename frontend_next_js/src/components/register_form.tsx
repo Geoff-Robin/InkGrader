@@ -1,6 +1,5 @@
 "use client"
 
-import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
@@ -9,14 +8,16 @@ import { AuthContext } from "@/lib/authContext"
 import { axiosInstance } from "@/axios"
 import { useRouter } from "next/navigation"
 import { Alert,AlertDescription } from "./ui/alert"
+import axios from "axios"
 
 export function RegisterForm() {
-  const [error, setError] = useState(false);
-  const [email, setEmail] = useState("");
-  const [username, setUsername] = useState("");
-  const [password, setPassword] = useState("");
+  const [error, setError] = useState<boolean>(false);
+  const [errorMessage, setErrorMessage] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
   const { setRefreshToken, setAccessToken } = useContext(AuthContext);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState<boolean>(false);
   const router = useRouter();
   const handleRegister = async(e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -31,9 +32,12 @@ export function RegisterForm() {
       setAccessToken(access_token);
       setRefreshToken(refresh_token);
       router.push('/dashboard');
-    }catch(err: any){
-      const message = err.response?.data?.message || err.message || "Something went wrong";
-      setError(message);
+    }catch(err: unknown){
+      if (axios.isAxiosError(err)) {
+        setError(err.response?.data?.message || "Failed to register");
+      } else {
+        setErrorMessage("An unexpected error occurred");
+      }
     }finally{
       setLoading(false)
     }
@@ -48,7 +52,7 @@ export function RegisterForm() {
         </p>
       </div>
       {error && (<Alert variant="destructive">
-              <AlertDescription>Error: {error}</AlertDescription>
+              <AlertDescription>Error: {errorMessage}</AlertDescription>
             </Alert>)}
       <div className="grid gap-6">
         <div className="grid gap-3">

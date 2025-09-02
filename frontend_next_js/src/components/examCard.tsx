@@ -4,7 +4,7 @@ import { Card, CardDescription, CardHeader } from "@/components/ui/card";
 import { FileText } from "lucide-react";
 import { useRouter } from "next/navigation"
 
-export function ExamCard({ exam }: any) {
+export function ExamCard({ exam }: { exam: { id: string; exam_name: string } }) {
     const router = useRouter();
     return (
         <Card key={exam.id} className="bg-card rounded-lg border shadow-sm hover:shadow-md transition-shadow cursor-pointer group">
