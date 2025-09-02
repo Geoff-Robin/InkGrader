@@ -18,7 +18,7 @@ const ExamPage = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    const websocketUri = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://127.0.0.1:8000/api/";
+    const websocketUri = process.env.NEXT_PUBLIC_WEBSOCKET_URL || process.env.NEXT_LOCAL_WEBSOCKET_URL;
     const socket = new WebSocket(`${websocketUri}/exam/${exam_id}`);
 
     socket.onopen = () => {
