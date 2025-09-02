@@ -18,8 +18,9 @@ const ExamPage = () => {
   const [isConnected, setIsConnected] = useState<boolean>(false);
 
   useEffect(() => {
-    const socket = new WebSocket(`ws://127.0.0.1:8000/exam/${exam_id}`);
-    
+    const websocketUri = process.env.NEXT_PUBLIC_WEBSOCKET_URL || "ws://127.0.0.1:8000/api/";
+    const socket = new WebSocket(`${websocketUri}/exam/${exam_id}`);
+
     socket.onopen = () => {
       console.log("WebSocket connection established");
       setIsConnected(true);
