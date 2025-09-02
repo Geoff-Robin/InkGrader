@@ -8,8 +8,6 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
-import asyncio
-from config import running_tasks
 from config import origins
 from Auth.routes import auth_router
 from routes import exam_router
@@ -39,12 +37,6 @@ async def lifespan(app: FastAPI):
     app.database = app.mongodb_client["InkGrader"]
     yield
     await app.mongodb_client.close()
-    for task in running_tasks.values():
-        task.cancel()
-        try:
-            await task
-        except asyncio.CancelledError:
-            pass
 
 app = FastAPI(lifespan=lifespan, debug=True)
 

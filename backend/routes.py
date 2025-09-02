@@ -31,6 +31,7 @@ async def create_exam_form(
 ):
     questions_cursor = await request.app.database["Questions"].find_one({"user_id": user["_id"], "exam_name": form.exam_name})
     if questions_cursor:
+        response.status_code=403
         return{
             "message": "Exam form already exists",
         }
@@ -89,51 +90,93 @@ async def exam_socket(websocket: WebSocket):
 
     try:
         last_msg = await stream_manager.get_last_message(grading_process_key)
-        if(last_msg["answer_id"] and last_msg["message"] == f"Grading completed for {last_msg['answer_id']}"):
-            answers_cursor = await websocket.app.database["Answers"].find_one({"_id": last_msg["answer_id"]})
-            total_marks = 0
-            for answer in answers_cursor.get("answers", []):
-                total_marks += answer.get("marks", 0)
-            await conn_manager.send_personal_message({"file_name": answers_cursor["file_name"], "total_marks": total_marks}, user_id)
-        last_id = "$" 
+        if last_msg and "answer_id" in last_msg:
+            answers_cursor = await websocket.app.database["Answers"].find_one(
+                {"_id": ObjectId(last_msg["answer_id"])}
+            )
+            if answers_cursor:
+                total_marks = sum(a.get("marks", 0) for a in answers_cursor.get("answers", []))
+                await conn_manager.send_personal_message(
+                    {"file_name": answers_cursor["file_name"], "total_marks": total_marks},
+                    user_id,
+                )
+
+        last_id = "$"
+
         while True:
-            messages = await stream_manager.redis.xread({grading_process_key: last_id}, block=5000, count=1)
-            if not messages:
-                continue
-            for _, msgs in messages:
-                for msg_id, fields in msgs:
-                    answers_info_list = websocket.app.database["Answers"].find(
-                        {"user_id": ObjectId(user_id), "exam_id": ObjectId(exam_id)}
-                    )
-                    answers_info_list = await answers_info_list.to_list(length=None)
-                    if not answers_info_list:
-                        await conn_manager.send_personal_message(
-                            {"message": "No answers found for grading"}, user_id
-                        )
-                        continue
+            try:
+                messages = await stream_manager.redis.xread(
+                    {grading_process_key: last_id}, block=5000, count=1
+                )
+                if not messages:
+                    continue
 
-                    data = []
-                    for answer_info in answers_info_list:
-                        total_marks = sum(
-                            answer.get("marks", 0) for answer in answer_info.get("answers", [])
+                for _, msgs in messages:
+                    for msg_id, fields in msgs:
+                        answers_info_list = websocket.app.database["Answers"].find(
+                            {"user_id": ObjectId(user_id), "exam_id": ObjectId(exam_id)}
                         )
-                        data.append(
-                            {"file_name": answer_info["file_name"], "total_marks": total_marks}
-                        )
+                        answers_info_list = await answers_info_list.to_list(length=None)
 
-                    await conn_manager.send_personal_message({"update": data}, user_id)
-                    last_id = msg_id
+                        if not answers_info_list:
+                            await conn_manager.send_personal_message(
+                                {"message": "No answers found for grading"}, user_id
+                            )
+                            continue
+
+                        data = []
+                        for answer_info in answers_info_list:
+                            total_marks = sum(a.get("marks", 0) for a in answer_info.get("answers", []))
+                            data.append(
+                                {"file_name": answer_info["file_name"], "total_marks": total_marks}
+                            )
+
+                        await conn_manager.send_personal_message({"update": data}, user_id)
+                        last_id = msg_id
+            except Exception as inner_e:
+                print(f"Error while processing stream message: {inner_e}")
+                await asyncio.sleep(1)
 
     except WebSocketDisconnect:
         await conn_manager.disconnect(user_id)
-        await stream_manager.close()
+        await websocket.close(code=1000, reason="WebSocket connection cancelled")
     except asyncio.CancelledError:
-        await stream_manager.close()
         await websocket.close(code=1000, reason="WebSocket connection cancelled")
         print(f"WebSocket connection for user {user_id} cancelled.")
     finally:
         await stream_manager.close()
         print(f"WebSocket connection for user {user_id} closed.")
+
+
+@exam_router.get("/{exam_id}/{file_name}")
+async def get_test_results(request: Request, exam_id: str, file_name: str, user=Depends(get_current_user)):
+    answers_cursor = await request.app.database["Answers"].find_one({
+        "user_id": ObjectId(user["_id"]),
+        "exam_id": ObjectId(exam_id),
+        "file_name": file_name
+    })
+    questions_cursors = await request.app.database["Questions"].find_one({
+        "user_id": ObjectId(user["_id"]),
+        "_id": ObjectId(exam_id)
+    })
+    if not questions_cursors:
+        request.status_code=404
+        return {"message": "No questions found for the specified exam"}
+
+    if not answers_cursor:
+        request.status_code=404
+        return {"message": "No answers found for the specified exam and file name"}
+
+    total_marks = 0
+    for answer in answers_cursor.get("answers", []):
+        total_marks += answer.get("marks", 0)
+
+    return {
+        "file_name": answers_cursor["file_name"],
+        "total_marks": total_marks,
+        "questions": questions_cursors.get("questions", []),
+        "answers": answers_cursor.get("answers", [])
+    }
         
 @exam_router.get("/")
 async def get_exam_list(

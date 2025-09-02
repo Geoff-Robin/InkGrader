@@ -8,7 +8,6 @@ from FileProcessor.utils import (
 from models import GradingTaskArgs
 from redis_stream import StreamManager
 import traceback
-from config import task_lock, running_tasks
 
 
 async def grading_task(grading_task_args: GradingTaskArgs):
@@ -85,17 +84,13 @@ async def grading_task(grading_task_args: GradingTaskArgs):
                 )
                 print(f"Updated marks for question {question_info['question_id']}: {marks}")
             await stream_manager.add_message(
-                f"{grading_task_args.user_id}:{exam_id}",
-                {"message": f"Grading completed for {answer_paper['_id']}", "exam_id": exam_id,"answer_id": answer_paper["_id"]},
+                f"{user_id}:{exam_id}",
+                {"message": f"Grading completed for {str(answer_paper['_id'])}", "exam_id": str(exam_id), "answer_id": str(answer_paper["_id"])},
             )
 
     except Exception as e:
         print(f"Error in grading task: {e}")
+        traceback.print_exc()
 
     finally:
         await stream_manager.close()
-        if exam_id:
-            async with task_lock:
-                task_key = f"{grading_task_args.user_id}:{exam_id}"
-                if task_key in running_tasks:
-                    running_tasks.pop(task_key, None)
