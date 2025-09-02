@@ -67,9 +67,10 @@ export default function ExamFormPage(): React.ReactElement {
         }
       }
       await axiosPrivate.post("/exam/form", formDataToSubmit);
-      router.push("/exam/success");
     }catch (error) {
       console.error("Error submitting form:", error);
+    }finally{
+      router.push("/dashboard");
     }
   };
 
@@ -108,7 +109,7 @@ export default function ExamFormPage(): React.ReactElement {
     if (config.type === "input") {
       return (
         <div key={fieldName} className="space-y-2">
-          <Label htmlFor={fieldName} className="text-zinc-700 font-medium">
+          <Label htmlFor={fieldName} className="font-medium">
             {config.label}
           </Label>
           <Input
@@ -130,13 +131,13 @@ export default function ExamFormPage(): React.ReactElement {
       
       return (
         <div key={fieldName} className="space-y-3">
-          <Label className="text-zinc-700 font-medium">
+          <Label className="font-medium">
             {config.label}
           </Label>
-          <p className="text-sm text-zinc-500">{config.description}</p>
-          
+          <p className="text-sm">{config.description}</p>
+
           {!currentFile ? (
-            <div className="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center hover:border-zinc-400 transition-colors duration-200 bg-zinc-50/50">
+            <div className="border-2 border-dashed border-zinc-300 rounded-lg p-8 text-center hover:border-zinc-400 transition-colors duration-200">
               <input
                 type="file"
                 accept={config.accept}
@@ -151,20 +152,20 @@ export default function ExamFormPage(): React.ReactElement {
                 htmlFor={`file-${fieldName}`}
                 className="cursor-pointer flex flex-col items-center"
               >
-                <div className="w-12 h-12 rounded-full bg-zinc-100 flex items-center justify-center mb-3">
-                  <Upload className="w-6 h-6 text-zinc-600" />
+                <div className="w-12 h-12 rounded-full flex items-center justify-center mb-3">
+                  <Upload className="w-6 h-6" />
                 </div>
-                <span className="text-lg font-medium text-zinc-700 mb-2">
+                <span className="text-lg font-medium mb-2">
                   Click to upload file
                 </span>
                 <div className="flex flex-wrap justify-center gap-1 mb-2">
                   {config.formats?.map((format: string) => (
-                    <Badge key={format} variant="secondary" className="bg-zinc-100 text-zinc-600 text-xs">
+                    <Badge key={format} variant="secondary" className="text-xs">
                       {format}
                     </Badge>
                   ))}
                 </div>
-                <span className="text-sm text-zinc-500">
+                <span className="text-sm">
                   Maximum file size: 10MB
                 </span>
               </label>
@@ -174,12 +175,12 @@ export default function ExamFormPage(): React.ReactElement {
               <CardContent className="p-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-3">
-                    <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
-                      <Check className="w-5 h-5 text-emerald-600" />
+                    <div className="w-10 h-10 rounded-full flex items-center justify-center">
+                      <Check className="w-5 h-5" />
                     </div>
                     <div>
-                      <p className="font-medium text-zinc-800">{currentFile.name}</p>
-                      <p className="text-sm text-zinc-500">
+                      <p className="font-medium">{currentFile.name}</p>
+                      <p className="text-sm">
                         {(currentFile.size / 1024 / 1024).toFixed(2)} MB
                       </p>
                     </div>
@@ -188,7 +189,7 @@ export default function ExamFormPage(): React.ReactElement {
                     variant="ghost"
                     size="sm"
                     onClick={() => removeFile(fieldName as keyof FormData)}
-                    className="text-zinc-500 hover:text-red-600 hover:bg-red-50"
+                    className="hover:text-red-600 hover:bg-red-50"
                   >
                     <X className="w-4 h-4" />
                   </Button>
@@ -204,19 +205,19 @@ export default function ExamFormPage(): React.ReactElement {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-50 p-4">
+    <div className="min-h-screen p-4">
       <div className="max-w-2xl mx-auto">
         {/* Header */}
         <div className="text-center mb-8">
-          <h1 className="text-3xl font-bold text-zinc-900 mb-2">Submit Exam Details</h1>
-          <p className="text-zinc-600">Upload question paper, answer papers, and reference materials</p>
+          <h1 className="text-3xl font-boldmb-2">Submit Exam Details</h1>
+          <p>Upload question paper, answer papers, and reference materials</p>
         </div>
 
         {/* Main Form */}
         <form onSubmit={handleSubmit}>
           <Card className="border-zinc-200">
             <CardHeader>
-              <CardTitle className="text-xl text-zinc-900 flex items-center gap-2">
+              <CardTitle className="text-xl flex items-center gap-2">
                 <FileText className="w-5 h-5" />
                 Exam Details
               </CardTitle>
@@ -228,7 +229,7 @@ export default function ExamFormPage(): React.ReactElement {
               <div className="pt-4">
                 <Button 
                   type="submit" 
-                  className="w-full bg-zinc-900 hover:bg-zinc-800 text-white"
+                  className="w-full"
                   size="lg"
                 >
                   Submit Exam Form
@@ -242,38 +243,38 @@ export default function ExamFormPage(): React.ReactElement {
         {(formData.exam_name.trim() || formData.questions || formData.student_answers || formData.rag_material) && (
           <Card className="mt-8 border-zinc-200">
             <CardHeader>
-              <CardTitle className="text-lg text-zinc-900">Form Preview</CardTitle>
+              <CardTitle className="text-lg">Form Preview</CardTitle>
             </CardHeader>
             <CardContent>
               <div className="grid grid-cols-1 gap-3">
                 {formData.exam_name.trim() && (
-                  <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/50">
-                    <Label className="font-medium text-zinc-700">Exam Name</Label>
-                    <p className="text-zinc-600 mt-1">{formData.exam_name}</p>
+                  <div className="p-3 border border-zinc-200 rounded-lg">
+                    <Label className="font-medium">Exam Name</Label>
+                    <p className=" mt-1">{formData.exam_name}</p>
                   </div>
                 )}
                 {formData.questions && (
-                  <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/50">
-                    <Label className="font-medium text-zinc-700">Question Paper</Label>
-                    <p className="text-zinc-600 mt-1 flex items-center gap-2">
+                  <div className="p-3 border border-zinc-200 rounded-lg">
+                    <Label className="font-medium">Question Paper</Label>
+                    <p className=" mt-1 flex items-center gap-2">
                       <FileText className="w-4 h-4" />
                       {formData.questions.name}
                     </p>
                   </div>
                 )}
                 {formData.student_answers && (
-                  <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/50">
-                    <Label className="font-medium text-zinc-700">Answer Papers</Label>
-                    <p className="text-zinc-600 mt-1 flex items-center gap-2">
+                  <div className="p-3 border border-zinc-200 rounded-lg">
+                    <Label className="font-medium">Answer Papers</Label>
+                    <p className=" mt-1 flex items-center gap-2">
                       <FileText className="w-4 h-4" />
                       {formData.student_answers.name}
                     </p>
                   </div>
                 )}
                 {formData.rag_material && (
-                  <div className="p-3 border border-zinc-200 rounded-lg bg-zinc-50/50">
-                    <Label className="font-medium text-zinc-700">Reference Material</Label>
-                    <p className="text-zinc-600 mt-1 flex items-center gap-2">
+                  <div className="p-3 border border-zinc-200 rounded-lg">
+                    <Label className="font-medium">Reference Material</Label>
+                    <p className=" mt-1 flex items-center gap-2">
                       <FileText className="w-4 h-4" />
                       {formData.rag_material.name}
                     </p>
