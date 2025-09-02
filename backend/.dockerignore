@@ -1,23 +1,29 @@
+# Python
 __pycache__/
 *.pyc
 *.pyo
 *.pyd
-env/
+*.sqlite3
+*.db
+
+# Environment
+.env
+.venv/
 venv/
-build/
+
+# Testing
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Build
 dist/
-*.egg-info/
-*.log
+build/
+
+# Git
 .git/
 .gitignore
-Dockerfile
-docker-compose.yml
-tests/
-.idea/
-.vscode/
-*.db
-*.sqlite3
-node_modules/
-*.bak
-*.swp
-*.tmp
+
+# OS
+.DS_Store
+Thumbs.db
