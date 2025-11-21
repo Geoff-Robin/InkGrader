@@ -35,14 +35,14 @@ InkGrader is an AI-powered web application designed to automate the evaluation o
 
 4. Run the FastAPI server:
    ```bash
-   python app.py
+   uvicorn app:app --port 8000 # Any port number you wish
    ```
 
 ### Frontend Setup
 
 1. Navigate to the frontend directory:
    ```bash
-   cd ../demo-frontend
+   cd ../frontend
    ```
 
 2. Install frontend dependencies:
@@ -67,40 +67,24 @@ InkGrader is an AI-powered web application designed to automate the evaluation o
 ## Technologies Used
 
 ### Backend
-- Flask (REST API)
-- Flask-JWT-Extended (authentication)
-- Flask-CORS
+- FastAPI (REST API)
+- FAISS
 - OCR.Space API (OCR services)
 - Python 3
 
 ### Frontend
+- ShadCN ecosystem
 - React
 - Vite
 - ESLint
 
 ## Configuration
 
-Before running the app, make sure to set the following environment variables:
-
-- `OCR_API_KEY`: Your OCR.Space API key for OCR functionality.
-- `SECRET_KEY`: A secret key for Flask JWT authentication.
-
-You can create a `.env` file and add these variables:
-```bash
-OCR_API_KEY=your_api_key_here
-SECRET_KEY=your_secret_key_here
-```
+Please check .env.example file.
 
 ## Acknowledgments
 
 - OCR.Space for their free OCR API.
-- Flask for the backend framework.
-- React and Vite for the frontend tools.
-- The contributors and open-source community for making this project possible.
-
-## Contributing
-
-Contributions are welcome! Feel free to fork the repository, open issues, or submit pull requests.
 
 ## License
 
