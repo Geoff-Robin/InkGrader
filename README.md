@@ -33,7 +33,7 @@ InkGrader is an AI-powered web application designed to automate the evaluation o
    pip install -r requirements.txt
    ```
 
-4. Run the Flask server:
+4. Run the FastAPI server:
    ```bash
    python app.py
    ```
