@@ -21,7 +21,7 @@ exam_router = APIRouter()
 conn_manager = ConnectionManager()
 
 
-@exam_router.post("/form")
+@exam_router.post("/exam")
 async def create_exam_form(
     background_tasks: BackgroundTasks,
     request: Request,
@@ -64,7 +64,7 @@ async def create_exam_form(
     return {"message": "Exam created successfully"}
 
 
-@exam_router.websocket_route("/{exam_id}")
+@exam_router.websocket_route("/exam/{exam_id}")
 async def exam_socket(websocket: WebSocket):
     await websocket.accept()
     exam_id = websocket.path_params.get("exam_id")
@@ -177,7 +177,7 @@ async def get_test_results(request: Request, exam_id: str, file_name: str, user=
         "questions": questions_cursors.get("questions", []),
         "answers": answers_cursor.get("answers", [])
     }
-        
+
 @exam_router.get("/")
 async def get_exam_list(
     request: Request,
