@@ -1,0 +1,15 @@
+[project]
+name = "backend"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "baml>=0.19.1",
+    "fastapi==0.116.1",
+    "pymongo==4.14.1",
+    "pypdf==6.0.0",
+    "python-dotenv==1.1.1",
+    "redis==6.4.0",
+    "scikit-learn>=1.8.0",
+]
