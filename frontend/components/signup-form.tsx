@@ -17,6 +17,7 @@ import {
   FieldSeparator,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import Link from "next/link";
 
 export function SignUpForm({
   className,
@@ -40,7 +41,7 @@ export function SignUpForm({
                       fill="currentColor"
                     />
                   </svg>
-                  Login with Google
+                  Sign Up with Google
                 </Button>
               </Field>
               <FieldSeparator className="*:data-[slot=field-separator-content]:bg-card">
@@ -68,9 +69,9 @@ export function SignUpForm({
                 <Input id="password" type="password" required />
               </Field>
               <Field>
-                <Button type="submit">Login</Button>
+                <Button type="submit">Sign Up</Button>
                 <FieldDescription className="text-center">
-                  Don&apos;t have an account? <a href="#">Sign up</a>
+                  Already have an account? <Link href="/login">Log In</Link>
                 </FieldDescription>
               </Field>
             </FieldGroup>
