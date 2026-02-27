@@ -2,7 +2,7 @@ import Image from "next/image";
 
 export default function Footer() {
   return (
-    <footer className="w-full bg-white dark:bg-black border-t border-gray-200 dark:border-white/10 py-12 transition-colors">
+    <footer className="w-full bg-white dark:bg-black border-t border-gray-200 dark:border-white/10 py-12 mt-10 transition-colors">
       <div className="max-w-7xl mx-auto px-8">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
           {/* Brand Column */}
