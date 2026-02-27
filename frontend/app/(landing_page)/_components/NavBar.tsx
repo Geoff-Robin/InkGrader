@@ -3,6 +3,7 @@ import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { useTheme } from "next-themes";
 import ToggleIcon from "./ToggleIcon";
+import Link from "next/link";
 
 export default function NavBar() {
   const { theme, setTheme } = useTheme();
@@ -33,8 +34,8 @@ export default function NavBar() {
           <a href="#features" className="hover:text-blue-600 transition-colors">
             Features
           </a>
-          <a href="#reviews" className="hover:text-blue-600 transition-colors">
-            Reviews
+          <a href="#faq" className="hover:text-blue-600 transition-colors">
+            FAQ
           </a>
         </div>
 
@@ -47,23 +48,31 @@ export default function NavBar() {
             <ToggleIcon />
           </button>
           <div className="flex items-center gap-3">
-            <Button
-              variant="outline"
-              size="lg"
-              style={{ padding: "10px 14px", fontSize: "15px", height: "35px" }}
-            >
-              Log in
-            </Button>
-            <Button
-              size="lg"
-              style={{
-                padding: "10px 14px",
-                fontSize: "15px",
-                height: "35px",
-              }}
-            >
-              Sign up
-            </Button>
+            <Link href="/login">
+              <Button
+                variant="outline"
+                size="lg"
+                style={{
+                  padding: "10px 14px",
+                  fontSize: "15px",
+                  height: "35px",
+                }}
+              >
+                Log in
+              </Button>
+            </Link>
+            <Link href="/signup">
+              <Button
+                size="lg"
+                style={{
+                  padding: "10px 14px",
+                  fontSize: "15px",
+                  height: "35px",
+                }}
+              >
+                Sign up
+              </Button>
+            </Link>
           </div>
         </div>
       </div>
