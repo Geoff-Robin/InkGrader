@@ -33,8 +33,8 @@ export default function NavBar() {
           <a href="#features" className="hover:text-blue-600 transition-colors">
             Features
           </a>
-          <a href="#pricing" className="hover:text-blue-600 transition-colors">
-            Pricing
+          <a href="#reviews" className="hover:text-blue-600 transition-colors">
+            Reviews
           </a>
         </div>
 
