@@ -2,11 +2,8 @@ from FileProcessor import FileContentType
 from pypdf import PdfReader
 from pypdf._page import PageObject
 from io import BytesIO
-from bson import ObjectId
 import base64
 from Agents.models import QuestionExtractionModel,AnswerExtractionModel
-from pymongo.database import Database
-from pymongo import UpdateOne
 from typing import List
 from Agents.rag_pipeline import *
 from pypdf import PdfReader
@@ -22,27 +19,14 @@ def extract_text_from_pdf(pdf_bytes: BytesIO) -> str:
             text.append(page_text)
     return "\n".join(text)
 
-async def save_questions_in_db(
-    user_id: ObjectId, exam_name: str, questions: List[QuestionExtractionModel], db: Database
-):
+async def save_questions_in_db(exam_name: str, questions: List[QuestionExtractionModel]):
     questions_list = [question.model_dump() for question in questions]
-    await db["Questions"].insert_one({
-            "user_id": user_id,
-            "exam_name": exam_name,
-            "questions": questions_list
-        })
-    
-async def save_answers_in_db(
-    user_id: ObjectId, exam_id: ObjectId, answers: List[AnswerExtractionModel], db: Database, file_name: str
-):
+    # TODO: Implement saving questions to database
+
+async def save_answers_in_db(answers: List[AnswerExtractionModel],file_name: str):
     answer_dicts = [answer.model_dump() for answer in answers]
-    await db["Answers"].insert_one({
-        "exam_id": exam_id,
-        "user_id": user_id,
-        "file_name": file_name,
-        "answers": answer_dicts,
-    })  
-    
+    # TODO: Implement saving answers to database
+
 def file_type(page: PageObject) -> FileContentType:
     text = page.extract_text()
     has_text = bool(text and text.strip())

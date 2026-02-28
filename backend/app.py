@@ -11,33 +11,21 @@ import os
 from config import origins
 from Auth.routes import auth_router
 from routes import exam_router
-from pymongo import AsyncMongoClient
 from fastapi.middleware.cors import CORSMiddleware
+from Database.config import get_engine
+from Database.models import Base
 
 load_dotenv()
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    load_dotenv()
-    user = os.getenv("MONGO_DB_USERNAME")
-    pwd = os.getenv("MONGO_DB_PASSWORD")
-    if not user or not pwd:
-        raise RuntimeError("Missing MongoDB credentials")
-    uri = f"mongodb+srv://{user}:{pwd}@cluster0.bfi26pi.mongodb.net/?retryWrites=true&w=majority&appName=Cluster0"
-    app.mongodb_client = AsyncMongoClient(uri)
-    try:
-        ping = await app.mongodb_client.admin.command("ping")
-        if ping.get("ok") != 1:
-            raise Exception("Ping failed")
-        print("✅ Connected to MongoDB")
-    except Exception:
-        print("❌ Failed to connect to MongoDB")
-        await app.mongodb_client.close()
-        raise
-    app.database = app.mongodb_client["InkGrader"]
+    engine = await get_engine()
+    if(os.environ["DEV"] == "true"):
+        async with engine.begin() as conn:
+            await conn.run_sync(Base.metadata.drop_all)
+            await conn.run_sync(Base.metadata.create_all)
     yield
-    await app.mongodb_client.close()
-
+    await engine.dispose()
 app = FastAPI(lifespan=lifespan, debug=True)
 
 app.include_router(exam_router, prefix="/api/exam")
