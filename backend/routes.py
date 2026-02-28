@@ -148,7 +148,7 @@ async def exam_socket(websocket: WebSocket):
         print(f"WebSocket connection for user {user_id} closed.")
 
 
-@exam_router.get("/{exam_id}/{file_name}")
+@exam_router.get("/exam/{exam_id}/student/{file_name}")
 async def get_test_results(request: Request, exam_id: str, file_name: str, user=Depends(get_current_user)):
     answers_cursor = await request.app.database["Answers"].find_one({
         "user_id": ObjectId(user["_id"]),
@@ -158,6 +158,9 @@ async def get_test_results(request: Request, exam_id: str, file_name: str, user=
     questions_cursors = await request.app.database["Questions"].find_one({
         "user_id": ObjectId(user["_id"]),
         "_id": ObjectId(exam_id)
+
+
+
     })
     if not questions_cursors:
         request.status_code=404
@@ -178,7 +181,7 @@ async def get_test_results(request: Request, exam_id: str, file_name: str, user=
         "answers": answers_cursor.get("answers", [])
     }
 
-@exam_router.get("/")
+@exam_router.get("/exam")
 async def get_exam_list(
     request: Request,
     user=Depends(get_current_user),

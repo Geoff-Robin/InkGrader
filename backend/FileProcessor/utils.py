@@ -11,14 +11,9 @@ from pypdf import PdfReader
 from io import BytesIO
 from models import *
 from Agents.extraction_agent import ExtractionAgent
-from pymongo.database import Database
 from Agents.rag_pipeline import *
-from sklearn.pipeline import Pipeline
 from pypdf import PdfReader
 from io import BytesIO
-import faiss
-from typing import Annotated
-from fastapi import File, UploadFile
 from FileProcessor.helpers import *
 
 
@@ -47,7 +42,7 @@ async def extract_and_save_questions(
         for page in reader.pages:
             if file_type(page) == FileContentType.IMG:
                 ocr_engine2 = OcrAPI(
-                    engine=Engine.ENGINE_2, api_key=os.getenv("OCR_API_KEY")
+                    engine=Engine.ENGINE_2, api_key=os.getenv("OCR_API_KEY", "")
                 )
                 image_b64 = extract_image_base64(page)
                 questions += ocr_engine2.ocr_base64(image_b64)
@@ -56,10 +51,8 @@ async def extract_and_save_questions(
     extraction_agent = ExtractionAgent()
     extracted_questions = await extraction_agent.extract_questions(questions)
     await save_questions_in_db(
-        user_id=kwargs.get("user_id"),
         exam_name=kwargs.get("exam_name"),
         questions=extracted_questions,
-        db=db,
     )
 
 
@@ -108,9 +101,9 @@ async def process_rag_material(
     splitter = SentenceSplitter()
     chunks = splitter.transform([content])
     embeddings = embedder.transform(chunks)
-    
+
     assert len(chunks) == len(embeddings), "Mismatch between chunks and embeddings"
-    
+
     fetch_results = await db["Questions"].find_one({
         "exam_name": exam_name,
         "user_id": user_id
