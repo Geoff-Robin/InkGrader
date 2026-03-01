@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from Database.config import async_session
 from Database.models import Exam
@@ -10,7 +11,7 @@ class ExamDAL:
         self.session.add(exam)
         await self.session.commit()
 
-    async def get_exam(self, exam_id: int):
+    async def get_exam(self, exam_id: uuid.UUID):
         exam = await self.session.get(Exam, exam_id)
         return exam
 
@@ -18,7 +19,7 @@ class ExamDAL:
         self.session.add(exam)
         await self.session.commit()
 
-    async def delete_exam(self, exam_id: int):
+    async def delete_exam(self, exam_id: uuid.UUID):
         exam = await self.session.get(Exam, exam_id)
         if exam:
             await self.session.delete(exam)

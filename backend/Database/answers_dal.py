@@ -1,3 +1,4 @@
+import uuid
 from typing import Iterable, List
 
 from sqlalchemy import select, delete, update
@@ -13,7 +14,7 @@ class AnswersDAL:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_answers(self, exam_id: int, user_id: int) -> List[Answers]:
+    async def get_answers(self, exam_id: uuid.UUID, user_id: uuid.UUID) -> List[Answers]:
         stmt = (
             select(Answers)
             .join(Question, Answers.question_id == Question.id)
@@ -40,7 +41,7 @@ class AnswersDAL:
 
         await self.session.commit()
 
-    async def delete_answers(self, exam_id: int, user_id: int) -> int:
+    async def delete_answers(self, exam_id: uuid.UUID, user_id: uuid.UUID) -> int:
         stmt = delete(Answers).where(
             Answers.student_id == user_id,
             Answers.question_id.in_(
