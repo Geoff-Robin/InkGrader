@@ -1,3 +1,4 @@
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from Database import User
@@ -20,12 +21,12 @@ class UserDAL:
         await self.session.refresh(user)
         return user
 
-    async def get_user(self, user_id: int):
+    async def get_user(self, user_id: uuid.UUID):
         return await self.session.get(User, user_id)
 
     async def update_user(
         self,
-        user_id: int,
+        user_id: uuid.UUID,
         *,
         role: str | None = None,
         email: str | None = None,
@@ -54,7 +55,7 @@ class UserDAL:
         await self.session.refresh(user)
         return user
 
-    async def delete_user(self, user_id: int):
+    async def delete_user(self, user_id: uuid.UUID):
         user = await self.session.get(User, user_id)
         if not user:
             return None

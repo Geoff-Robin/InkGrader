@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime, timezone
 from sqlalchemy import (
     String,
@@ -23,8 +24,8 @@ class Base(DeclarativeBase):
 class Exam(Base):
     __tablename__ = "exams"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    teacher_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    teacher_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
     exam_name: Mapped[str] = mapped_column(String(120), nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
 
@@ -38,8 +39,8 @@ class Exam(Base):
 class Question(Base):
     __tablename__ = "questions"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    exam_id: Mapped[int] = mapped_column(ForeignKey("exams.id"), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    exam_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("exams.id"), nullable=False)
     text: Mapped[str] = mapped_column(String(500), nullable=False)
 
     exam: Mapped["Exam"] = relationship(back_populates="questions")
@@ -52,9 +53,9 @@ class Question(Base):
 class Answers(Base):
     __tablename__ = "answers"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
-    student_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
-    question_id: Mapped[int] = mapped_column(ForeignKey("questions.id"), nullable=False)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("users.id"), nullable=False)
+    question_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("questions.id"), nullable=False)
     answer: Mapped[str] = mapped_column(String(1000), nullable=False)
 
     student: Mapped["User"] = relationship(back_populates="answers")
@@ -64,7 +65,7 @@ class Answers(Base):
 class User(Base):
     __tablename__ = "users"
 
-    id: Mapped[int] = mapped_column(primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     role: Mapped[str] = mapped_column(String(20), nullable=False)
     email: Mapped[str | None] = mapped_column(String(120), unique=True)
     password: Mapped[str | None] = mapped_column(String(120))
