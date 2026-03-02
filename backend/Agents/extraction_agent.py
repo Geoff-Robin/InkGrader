@@ -23,7 +23,7 @@ class ExtractionAgent:
         )
         result = await self._agent.run(questions,infer_name=False)
         return result.output
-    
+
     async def extract_answers(self,answers: str)->List[AnswerExtractionModel]:
         self._agent = Agent(
             model='groq:moonshotai/kimi-k2-instruct',
