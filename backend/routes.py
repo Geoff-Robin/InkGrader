@@ -20,10 +20,17 @@ from grading_task import grading_task
 exam_router = APIRouter()
 conn_manager = ConnectionManager()
 
+@exam_router.get("/")
+async def get_exams(
+    request: Request,
+    response: Response,
+    user=Depends(get_current_user),
+):
+    exams =""
+    return exams
 
-@exam_router.post("/exam")
+@exam_router.post("/")
 async def create_exam_form(
-    background_tasks: BackgroundTasks,
     request: Request,
     response: Response,
     user=Depends(get_current_user),

@@ -9,7 +9,6 @@ from fastapi import FastAPI
 from dotenv import load_dotenv
 import os
 from config import origins
-from Auth.routes import auth_router
 from routes import exam_router
 from fastapi.middleware.cors import CORSMiddleware
 from Database.config import get_engine
@@ -29,7 +28,6 @@ async def lifespan(app: FastAPI):
 app = FastAPI(lifespan=lifespan, debug=True)
 
 app.include_router(exam_router, prefix="/api/exam")
-app.include_router(auth_router, prefix="/api/auth")
 
 @app.post("/api")
 async def root():
