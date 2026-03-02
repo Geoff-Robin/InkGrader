@@ -1,18 +1,18 @@
 import pytest
 from Database.user_dal import UserDAL
+from Database.student_dal import StudentDAL
 from Database.exam_dal import ExamDAL
 from Database.questions_dal import QuestionDAL
 from Database.answers_dal import AnswersDAL
-from Database.models import User, Exam, Question, Answers
+from Database.models import User, Student, Exam, Question, Answers
 
 @pytest.mark.asyncio
 async def test_user_dal(db_session):
     user_dal = UserDAL(db_session)
 
-    # Test create teacher
-    teacher = await user_dal.create_user(role="teacher", email="t@test.com", password="pwd")
+    # Test create user
+    teacher = await user_dal.create_user(email="t@test.com", password="pwd")
     assert teacher.id is not None
-    assert teacher.role == "teacher"
 
     # Test get user
     fetched = await user_dal.get_user(teacher.id)
@@ -28,19 +28,41 @@ async def test_user_dal(db_session):
     else:
         raise RuntimeError("updated variable is None")
 
+    # Test delete user
+    await user_dal.delete_user(teacher.id)
+    assert await user_dal.get_user(teacher.id) is None
+
+@pytest.mark.asyncio
+async def test_student_dal(db_session):
+    student_dal = StudentDAL(db_session)
+
     # Test create student
-    student = await user_dal.create_user(role="student", marks=95)
+    student = await student_dal.create_student(marks=95)
     assert student.id is not None
     assert student.marks == 95
 
-    # Test delete user
-    await user_dal.delete_user(student.id)
-    assert await user_dal.get_user(student.id) is None
+    # Test get student
+    fetched = await student_dal.get_student(student.id)
+    if not fetched:
+        raise RuntimeError("fetched variable is None")
+    else:
+        assert fetched.marks == 95
+
+    # Test update student
+    updated = await student_dal.update_student(student.id, marks=100)
+    if updated:
+        assert updated.marks == 100
+    else:
+        raise RuntimeError("updated variable is None")
+
+    # Test delete student
+    await student_dal.delete_student(student.id)
+    assert await student_dal.get_student(student.id) is None
 
 @pytest.mark.asyncio
 async def test_exam_dal(db_session):
     user_dal = UserDAL(db_session)
-    teacher = await user_dal.create_user(role="teacher", email="t2@test.com", password="pwd")
+    teacher = await user_dal.create_user(email="t2@test.com", password="pwd")
 
     exam_dal = ExamDAL(db_session)
     exam = Exam(teacher_id=teacher.id, exam_name="Midterm")
@@ -71,7 +93,7 @@ async def test_exam_dal(db_session):
 async def test_question_dal(db_session):
     # Setup
     user_dal = UserDAL(db_session)
-    teacher = await user_dal.create_user(role="teacher", email="t3@test.com", password="pwd")
+    teacher = await user_dal.create_user(email="t3@test.com", password="pwd")
 
     exam_dal = ExamDAL(db_session)
     exam = Exam(teacher_id=teacher.id, exam_name="Test Exam")
@@ -101,8 +123,10 @@ async def test_question_dal(db_session):
 async def test_answers_dal(db_session):
     # Setup
     user_dal = UserDAL(db_session)
-    teacher = await user_dal.create_user(role="teacher", email="t4@test.com", password="pwd")
-    student = await user_dal.create_user(role="student", marks=0)
+    teacher = await user_dal.create_user(email="t4@test.com", password="pwd")
+
+    student_dal = StudentDAL(db_session)
+    student = await student_dal.create_student(marks=0)
 
     exam_dal = ExamDAL(db_session)
     exam = Exam(teacher_id=teacher.id, exam_name="Test Exam 2")
