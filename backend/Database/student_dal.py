@@ -1,5 +1,6 @@
 import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
 from Database.models import Student
 from Database.config import async_session
 
@@ -18,7 +19,9 @@ class StudentDAL:
         return student
 
     async def get_student(self, student_id: uuid.UUID):
-        return await self.session.get(Student, student_id)
+        query = select(Student).where(Student.id == student_id)
+        result = await self.session.execute(query)
+        return result.scalar()
 
     async def update_student(
         self,
@@ -26,7 +29,9 @@ class StudentDAL:
         *,
         marks: int | None = None,
     ):
-        student = await self.session.get(Student, student_id)
+        query = select(Student).where(Student.id == student_id)
+        result = await self.session.execute(query)
+        student = result.scalar()
         if not student:
             return None
 
@@ -38,7 +43,9 @@ class StudentDAL:
         return student
 
     async def delete_student(self, student_id: uuid.UUID):
-        student = await self.session.get(Student, student_id)
+        query = select(Student).where(Student.id == student_id)
+        result = await self.session.execute(query)
+        student = result.scalar()
         if not student:
             return None
 

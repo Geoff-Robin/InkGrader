@@ -1,10 +1,8 @@
 import uuid
 from typing import Iterable, List
 
-from sqlalchemy import select, delete, update
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.engine import CursorResult
-from typing import cast
 
 from Database.models import Answers, Question
 from Database.config import async_session
@@ -32,29 +30,34 @@ class AnswersDAL:
 
     async def update_answers(self, answers: Iterable[Answers]) -> None:
         for ans in answers:
-            stmt = (
-                update(Answers)
-                .where(Answers.id == ans.id)
-                .values(answer=ans.answer)
-            )
-            await self.session.execute(stmt)
+            query = select(Answers).where(Answers.id == ans.id)
+            result = await self.session.execute(query)
+            existing_ans = result.scalar()
+            if existing_ans:
+                existing_ans.answer = ans.answer
 
         await self.session.commit()
 
     async def delete_answers(self, exam_id: uuid.UUID, user_id: uuid.UUID) -> int:
-        stmt = delete(Answers).where(
-            Answers.student_id == user_id,
-            Answers.question_id.in_(
-                select(Question.id).where(Question.exam_id == exam_id)
-            ),
+        query = (
+            select(Answers)
+            .join(Question, Answers.question_id == Question.id)
+            .where(
+                Question.exam_id == exam_id,
+                Answers.student_id == user_id,
+            )
         )
-        result = await self.session.execute(stmt)
-        await self.session.commit()
+        result = await self.session.execute(query)
+        answers_to_delete = result.scalars().all()
 
-        cursor_result = cast(CursorResult, result)
-        return cursor_result.rowcount or 0
+        count = len(answers_to_delete)
+        for ans in answers_to_delete:
+            await self.session.delete(ans)
+
+        await self.session.commit()
+        return count
 
 
 async def get_answers_dal():
     async with async_session() as session:
-        yield AnswersDAL(session)
+        return AnswersDAL(session)

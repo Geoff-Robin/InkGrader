@@ -1,36 +1,9 @@
 import pytest
-from Database.user_dal import UserDAL
 from Database.student_dal import StudentDAL
 from Database.exam_dal import ExamDAL
 from Database.questions_dal import QuestionDAL
 from Database.answers_dal import AnswersDAL
-from Database.models import User, Student, Exam, Question, Answers
-
-@pytest.mark.asyncio
-async def test_user_dal(db_session):
-    user_dal = UserDAL(db_session)
-
-    # Test create user
-    teacher = await user_dal.create_user(email="t@test.com", password="pwd")
-    assert teacher.id is not None
-
-    # Test get user
-    fetched = await user_dal.get_user(teacher.id)
-    if(not fetched):
-        raise RuntimeError("fetched variable is None")
-    else:
-        assert fetched.email == "t@test.com"
-
-    # Test update user
-    updated = await user_dal.update_user(teacher.id, email="new@test.com")
-    if(updated):
-        assert updated.email == "new@test.com"
-    else:
-        raise RuntimeError("updated variable is None")
-
-    # Test delete user
-    await user_dal.delete_user(teacher.id)
-    assert await user_dal.get_user(teacher.id) is None
+from Database.models import Student, Exam, Question, Answers
 
 @pytest.mark.asyncio
 async def test_student_dal(db_session):
@@ -61,11 +34,8 @@ async def test_student_dal(db_session):
 
 @pytest.mark.asyncio
 async def test_exam_dal(db_session):
-    user_dal = UserDAL(db_session)
-    teacher = await user_dal.create_user(email="t2@test.com", password="pwd")
-
     exam_dal = ExamDAL(db_session)
-    exam = Exam(teacher_id=teacher.id, exam_name="Midterm")
+    exam = Exam(user_id="dummy_user_1", exam_name="Midterm")
     await exam_dal.create_exam(exam)
 
     assert exam.id is not None
@@ -91,17 +61,13 @@ async def test_exam_dal(db_session):
 
 @pytest.mark.asyncio
 async def test_question_dal(db_session):
-    # Setup
-    user_dal = UserDAL(db_session)
-    teacher = await user_dal.create_user(email="t3@test.com", password="pwd")
-
     exam_dal = ExamDAL(db_session)
-    exam = Exam(teacher_id=teacher.id, exam_name="Test Exam")
+    exam = Exam(user_id="dummy_user_2", exam_name="Test Exam")
     await exam_dal.create_exam(exam)
 
     question_dal = QuestionDAL(db_session)
-    q1 = Question(exam_id=exam.id, text="What is 2+2?")
-    q2 = Question(exam_id=exam.id, text="What is 3+3?")
+    q1 = Question(exam_id=exam.id, question_number="1", text="What is 2+2?", max_marks=5, topic="Math", question_type="Short")
+    q2 = Question(exam_id=exam.id, question_number="2", text="What is 3+3?", max_marks=5, topic="Math", question_type="Short")
 
     await question_dal.add_questions([q1, q2])
 
@@ -121,19 +87,15 @@ async def test_question_dal(db_session):
 
 @pytest.mark.asyncio
 async def test_answers_dal(db_session):
-    # Setup
-    user_dal = UserDAL(db_session)
-    teacher = await user_dal.create_user(email="t4@test.com", password="pwd")
-
     student_dal = StudentDAL(db_session)
     student = await student_dal.create_student(marks=0)
 
     exam_dal = ExamDAL(db_session)
-    exam = Exam(teacher_id=teacher.id, exam_name="Test Exam 2")
+    exam = Exam(user_id="dummy_user_3", exam_name="Test Exam 2")
     await exam_dal.create_exam(exam)
 
     question_dal = QuestionDAL(db_session)
-    q1 = Question(exam_id=exam.id, text="What is 2+2?")
+    q1 = Question(exam_id=exam.id, question_number="1", text="What is 2+2?", max_marks=5, topic="Math", question_type="Short")
     await question_dal.add_question(q1)
 
     answers_dal = AnswersDAL(db_session)
