@@ -1,31 +1,41 @@
 from FileProcessor import FileContentType
-from pypdf import PdfReader
 from pypdf._page import PageObject
-from io import BytesIO
 import base64
 from Agents.models import QuestionExtractionModel,AnswerExtractionModel
 from typing import List
-from Agents.rag_pipeline import *
-from pypdf import PdfReader
-from io import BytesIO
+from uuid import UUID
+from Database import get_question_dal, Question, get_answers_dal, Answers
 
+async def save_questions_in_db(questions: List[QuestionExtractionModel], **kwargs):
 
-def extract_text_from_pdf(pdf_bytes: BytesIO) -> str:
-    reader = PdfReader(pdf_bytes)
-    text = []
-    for page in reader.pages:
-        page_text = page.extract_text(extraction_mode="layout")
-        if page_text:
-            text.append(page_text)
-    return "\n".join(text)
+    questions_dict_list = [question.model_dump() for question in questions]
+    question_dal = await get_question_dal()
+    question_list = []
+    for question in questions_dict_list:
+        question_row = Question(
+            exam_id=kwargs["exam_id"],
+            question_number=question["question_id"],
+            text=question["question"],
+            max_marks=question["marks"],
+            topic=question["topic"],
+            question_type=question["question_type"],
+        )
+        question_list.append(question_row)
+    await question_dal.add_questions(question_list)
 
-async def save_questions_in_db(exam_name: str, questions: List[QuestionExtractionModel]):
-    questions_list = [question.model_dump() for question in questions]
-    # TODO: Implement saving questions to database
-
-async def save_answers_in_db(answers: List[AnswerExtractionModel],file_name: str):
-    answer_dicts = [answer.model_dump() for answer in answers]
-    # TODO: Implement saving answers to database
+async def save_answers_in_db(answers: List[AnswerExtractionModel],**kwargs):
+    answer_dict_list = [answer.model_dump() for answer in answers]
+    answer_dal = await get_answers_dal()
+    answer_list = []
+    for answer in answer_dict_list:
+        answer_row = Answers(
+            exam_id=kwargs["exam_id"],
+            question_number=answer["question_id"],
+            answer=answer["answers"],
+            marks=None,
+        )
+        answer_list.append(answer_row)
+    await answer_dal.add_answers(answer_list)
 
 def file_type(page: PageObject) -> FileContentType:
     text = page.extract_text()
