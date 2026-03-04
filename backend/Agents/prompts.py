@@ -92,10 +92,10 @@ Instructions:
 - Do not include explanations or reasoning in the output.
 
 Return your result in the following format:
-{
+{{
     "question_id": <int> (order of the question),
     "marks": <int> (score out of {max_marks})
-}
+}}
 '''
 
 RUBRICS_EXTRACTION_PROMPT = '''
