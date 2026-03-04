@@ -134,6 +134,10 @@ async def test_knowledge_base_dal(db_session):
     assert len(kbs) == 2
     assert kbs[0].content in ["Some content 1", "Some content 2"]
 
+    similar_kbs = await kb_dal.get_similar_knowledge(exam.id, [0.1, 0.2, 0.3], top_k=1)
+    assert len(similar_kbs) == 1
+    assert similar_kbs[0].content == "Some content 1"
+
     await kb_dal.delete_knowledge(exam.id)
     kbs_after = await kb_dal.get_knowledge(exam.id)
     assert len(kbs_after) == 0
