@@ -35,6 +35,8 @@ class AnswersDAL:
             existing_ans = result.scalar()
             if existing_ans:
                 existing_ans.answer = ans.answer
+                existing_ans.rubrics = ans.rubrics
+                existing_ans.marks = ans.marks
 
         await self.session.commit()
 
