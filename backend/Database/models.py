@@ -56,6 +56,7 @@ class Answers(Base):
     student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("students.id"), nullable=False)
     question_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("questions.id"), nullable=False)
     answer: Mapped[str] = mapped_column(String(1000), nullable=False)
+    rubrics: Mapped[str] = mapped_column(String(1000), nullable=False)
     marks: Mapped[int] = mapped_column(Integer(), nullable=True)
     student: Mapped["Student"] = relationship(back_populates="answers")
     question: Mapped["Question"] = relationship(back_populates="answers")
