@@ -1,7 +1,7 @@
 from FileProcessor import FileContentType
 from pypdf._page import PageObject
 import base64
-from Agents.models import QuestionExtractionModel,AnswerExtractionModel
+from Agents.models import QuestionExtractionModel, AnswerExtractionModel, RubricExtractionModel
 from typing import List
 from uuid import UUID
 from Database import get_question_dal, Question, get_answers_dal, Answers
@@ -36,6 +36,16 @@ async def save_answers_in_db(answers: List[AnswerExtractionModel],**kwargs):
         )
         answer_list.append(answer_row)
     await answer_dal.add_answers(answer_list)
+
+async def save_rubrics_in_db(rubrics: List[RubricExtractionModel], **kwargs):
+    rubric_dict_list = [rubric.model_dump() for rubric in rubrics]
+    answer_dal = await get_answers_dal()
+    answers_list = await answer_dal.get_answers(kwargs["exam_id"], kwargs["user_id"])
+    mp = {answer.id: answer for answer in answers_list}
+    for rubric in rubric_dict_list:
+        if rubric["question_id"] in mp:
+            mp[rubric["question_id"]].rubrics = rubric["rubrics"]
+    await answer_dal.update_answers(mp.values())
 
 def file_type(page: PageObject) -> FileContentType:
     text = page.extract_text()
