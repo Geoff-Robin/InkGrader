@@ -1,48 +1,67 @@
 import os
+import json
+import uuid
 import logging
-from pydantic_ai import Agent,Tool
-from pydantic_ai.common_tools.duckduckgo import duckduckgo_search_tool
-from Agents.models import GradingAgentDeps,GradingAgentOutput
-from httpx import AsyncClient
-from bson import ObjectId
-from typing import List
-from pymongo.database import Database
-from Agents.tools import rag_tool
+import asyncio
+from typing import Optional
+
+from groq import Groq
+from pydantic import BaseModel, Field, ValidationError
+
 from Agents.prompts import GRADING_AGENT_PROMPT
 
-# Configure logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-class GradingAgent:
-    def __init__(self, exam_id: str, user_id: ObjectId, db: Database):
-        logger.info(f"Initializing GradingAgent for exam_id={exam_id}, user_id={user_id}")
-        self._agent_settings = {"temperature": 0.2}
-        self.deps = GradingAgentDeps(
-            api_key=os.getenv("GROQ_API_KEY"),
-            http_client=AsyncClient,
-            exam_id=exam_id,
-            user_id=str(user_id),
-            db=db
-        )
-        self.agent = Agent(
-            model='groq:openai/gpt-oss-20b',
-            system_prompt=GRADING_AGENT_PROMPT,
-            model_settings=self._agent_settings,
-            deps_type=GradingAgentDeps,
-            output_type=GradingAgentOutput,
-            tools=[
-                duckduckgo_search_tool(),
-                Tool(rag_tool, takes_ctx=True)
-            ]
-        )
-        logger.info("GradingAgent initialized successfully.")
 
-    async def grade(self, query: str) -> GradingAgentOutput:
-        logger.info(f"Grading started for query: {query[:100]}...")
+class GradingAgentOutput(BaseModel):
+    question_id: int = Field(...)
+    marks: int = Field(...)
+
+
+class GradingAgent:
+    def __init__(self, api_key: Optional[str], exam_id: uuid.UUID):
+        if not api_key and not os.environ.get("GROQ_API_KEY"):
+            raise ValueError(
+                "GROQ_API_KEY environment variable or api_key argument must be provided"
+            )
+
+        self.api_key = api_key or os.environ["GROQ_API_KEY"]
+        self.groq = Groq(api_key=self.api_key)
+        self.exam_id = exam_id
+
+    async def grade(self, query: str) -> Optional[GradingAgentOutput]:
         try:
-            response = await self.agent.run(query, deps=self.deps, infer_name=False)
-            logger.info("Grading completed successfully.")
-            return response.output
-        except Exception as e:
-            logger.error(f"Error during grading: {e}")
+            response = await asyncio.to_thread(
+                self.groq.chat.completions.create,
+                model="openai/gpt-oss-120b",
+                messages=[
+                    {
+                        "role": "user",
+                        "content": GRADING_AGENT_PROMPT.format(query=query),
+                    }
+                ],
+                response_format={
+                    "type": "json_schema",
+                    "json_schema": {
+                        "name": "grading_output",
+                        "schema": GradingAgentOutput.model_json_schema(),
+                        "strict": True,
+                    },
+                },
+            )
+
+            if not response.choices:
+                return None
+
+            content = response.choices[0].message.content
+            if not content:
+                return None
+
+            parsed = json.loads(content)
+            return GradingAgentOutput(**parsed)
+
+        except (json.JSONDecodeError, ValidationError, Exception):
+            logger.exception("Grading failed")
+            return None
