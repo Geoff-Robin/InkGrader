@@ -26,6 +26,7 @@ class QuestionDAL:
                     "max_marks": q.max_marks,
                     "topic": q.topic,
                     "question_type": q.question_type,
+                    "rubrics": q.rubrics,
                 }
                 for q in questions
             ])
@@ -45,6 +46,20 @@ class QuestionDAL:
         if question_scalar:
             question_scalar.text = text
             await self.session.commit()
+
+    async def update_questions(self, questions: List[Question]):
+        for q in questions:
+            query = select(Question).where(Question.id == q.id, Question.exam_id == q.exam_id)
+            result = await self.session.execute(query)
+            existing_q = result.scalar()
+            if existing_q:
+                existing_q.text = q.text
+                existing_q.question_number = q.question_number
+                existing_q.max_marks = q.max_marks
+                existing_q.topic = q.topic
+                existing_q.question_type = q.question_type
+                existing_q.rubrics = q.rubrics
+        await self.session.commit()
 
     async def get_question(self, question_id: uuid.UUID, exam_id: uuid.UUID):
         question = await self.session.execute(select(Question).where(Question.id == question_id, Question.exam_id == exam_id))
