@@ -20,6 +20,16 @@ class KnowledgeBaseDAL:
         result = await self.session.execute(query)
         return list(result.scalars().all())
 
+    async def get_similar_knowledge(self, exam_id: uuid.UUID, query_vector: list[float], top_k: int = 5) -> List[KnowledgeBase]:
+        query = (
+            select(KnowledgeBase)
+            .where(KnowledgeBase.exam_id == exam_id)
+            .order_by(KnowledgeBase.vector.cosine_distance(query_vector))
+            .limit(top_k)
+        )
+        result = await self.session.execute(query)
+        return list(result.scalars().all())
+
     async def delete_knowledge(self, exam_id: uuid.UUID):
         query = delete(KnowledgeBase).where(KnowledgeBase.exam_id == exam_id)
         await self.session.execute(query)
