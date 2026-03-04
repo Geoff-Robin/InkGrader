@@ -14,7 +14,9 @@ from pypdf import PdfReader
 from io import BytesIO
 from Database import get_question_dal
 from FileProcessor.helpers import *
-
+from chonkie import RecursiveChunker
+from huggingface_hub import InferenceClient
+from Database import KnowledgeBase, get_knowledge_base_dal
 
 async def extract_and_save_questions(
     file_stream: BytesIO, filename: str, **kwargs
@@ -55,11 +57,11 @@ async def extract_and_save_questions(
 
 
 async def process_rag_material(
-    rag_file_info: str, **kwargs
+    file_stream: BytesIO, filename: str, **kwargs
 ):
     """
     Processes RAG material from the uploaded file, splits and embeds text,
-    and creates a FAISS index for semantic search.
+    and stores the embeddings in the database.
 
     Args:
         rag_file_info (RagFileInfo): Contains rag file name and bytes.
@@ -69,7 +71,35 @@ async def process_rag_material(
     Returns:
         None
     """
-    #TODO: Gotta use cognee
+    text = ""
+    if filename.endswith(".txt"):
+        text = file_stream.getvalue().decode("utf-8")
+    elif filename.endswith(".pdf"):
+        reader = PdfReader(file_stream)
+        for page in reader.pages:
+            if file_type(page) == FileContentType.IMG:
+                ocr_engine2 = OcrAPI(
+                    engine=Engine.ENGINE_2, api_key=os.environ["OCR_API_KEY"]
+                )
+                image_b64 = extract_image_base64(page)
+                text += ocr_engine2.ocr_base64(image_b64)
+            elif file_type(page) == FileContentType.TEXT:
+                text += page.extract_text()
+    else:
+        raise ValueError(f"Unsupported file type: {filename}")
+    # TODO: Use chonkie
+    client = InferenceClient()
+    MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+    recursive_chunker = RecursiveChunker(chunk_size = 1000)
+    initial_chunks = recursive_chunker.chunk(text)
+    texts = [chunk.text for chunk in initial_chunks]
+    embeddings = [client.feature_extraction(text, model=MODEL) for text in texts]
+    knowledge_base_dal = await get_knowledge_base_dal()
+    knowledge_base_rows = []
+    for embedding, chunk in zip(embeddings, initial_chunks):
+        knowledge_base_rows.append(KnowledgeBase(exam_id=kwargs["exam_id"], embedding=embedding, chunk=chunk.text))
+    await knowledge_base_dal.add_knowledge(knowledge_base_rows)
+
 
 
 async def extract_and_save_answers(
@@ -118,3 +148,23 @@ async def extract_and_save_answers(
     await save_answers_in_db(
         answers=extracted_answers, **kwargs
     )
+async def extract_and_save_rubric(file_stream: BytesIO, filename: str, **kwargs):
+    extraction_agent = ExtractionAgent()
+    file_content = ""
+    ocr_engine2 = OcrAPI(
+        engine=Engine.ENGINE_2, api_key=os.getenv("OCR_API_KEY", "")
+    )
+    if filename.endswith(".txt"):
+        file_content = file_stream.getvalue().decode("utf-8")
+    elif filename.endswith(".pdf"):
+        reader = PdfReader(file_stream)
+        for page in reader.pages:
+            if file_type(page) == FileContentType.TEXT:
+                file_content += page.extract_text()
+            elif file_type(page) == FileContentType.IMG:
+                image_b64 = extract_image_base64(page)
+                file_content += ocr_engine2.ocr_base64(image_b64)
+    else:
+        raise ValueError("Unsupported file type")
+    rubric = await extraction_agent.extract_rubrics(file_content)
+    await save_rubrics_in_db(rubric=rubric, **kwargs)
