@@ -6,10 +6,11 @@ readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "alembic>=1.18.4",
-    "cognee>=0.3.6",
+    "chonkie>=1.5.6",
     "fastapi==0.116.1",
     "faststream[redis]>=0.6.6",
     "groq>=1.0.0",
+    "huggingface-hub>=1.5.0",
     "psycopg[binary]>=3.3.3",
     "pypdf==6.0.0",
     "python-dotenv==1.1.1",
