@@ -12,7 +12,8 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
-
+import pgvector
+from pgvector.sqlalchemy import Vector
 
 class Base(DeclarativeBase):
     pass
@@ -72,3 +73,11 @@ class Student(Base):
         back_populates="student",
         cascade="all, delete-orphan",
     )
+
+class KnowledgeBase(Base):
+    __tablename__ = "knowledge_base"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    exam_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("exams.id"), nullable=False)
+    content: Mapped[str] = mapped_column(String())
+    vector: Mapped[list[float]] = mapped_column(Vector())

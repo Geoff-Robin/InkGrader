@@ -3,7 +3,8 @@ from Database.student_dal import StudentDAL
 from Database.exam_dal import ExamDAL
 from Database.questions_dal import QuestionDAL
 from Database.answers_dal import AnswersDAL
-from Database.models import Student, Exam, Question, Answers
+from Database.knowledge_base_dal import KnowledgeBaseDAL
+from Database.models import Student, Exam, Question, Answers, KnowledgeBase
 
 @pytest.mark.asyncio
 async def test_student_dal(db_session):
@@ -116,3 +117,23 @@ async def test_answers_dal(db_session):
     await answers_dal.delete_answers(exam.id, student.id)
     answers_after = await answers_dal.get_answers(exam.id, student.id)
     assert len(answers_after) == 0
+
+@pytest.mark.asyncio
+async def test_knowledge_base_dal(db_session):
+    exam_dal = ExamDAL(db_session)
+    exam = Exam(user_id="dummy_kb_user", exam_name="KB Exam")
+    await exam_dal.create_exam(exam)
+
+    kb_dal = KnowledgeBaseDAL(db_session)
+    kb1 = KnowledgeBase(exam_id=exam.id, content="Some content 1", vector=[0.1, 0.2, 0.3])
+    kb2 = KnowledgeBase(exam_id=exam.id, content="Some content 2", vector=[0.4, 0.5, 0.6])
+
+    await kb_dal.add_knowledge([kb1, kb2])
+
+    kbs = await kb_dal.get_knowledge(exam.id)
+    assert len(kbs) == 2
+    assert kbs[0].content in ["Some content 1", "Some content 2"]
+
+    await kb_dal.delete_knowledge(exam.id)
+    kbs_after = await kb_dal.get_knowledge(exam.id)
+    assert len(kbs_after) == 0
