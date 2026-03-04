@@ -25,27 +25,33 @@ async def save_questions_in_db(questions: List[QuestionExtractionModel], **kwarg
 
 async def save_answers_in_db(answers: List[AnswerExtractionModel],**kwargs):
     answer_dict_list = [answer.model_dump() for answer in answers]
+    question_dal = await get_question_dal()
+    questions = await question_dal.get_questions(kwargs["exam_id"])
+    question_map = {q.question_number: q.id for q in questions}
+
     answer_dal = await get_answers_dal()
     answer_list = []
     for answer in answer_dict_list:
-        answer_row = Answers(
-            exam_id=kwargs["exam_id"],
-            question_number=answer["question_id"],
-            answer=answer["answers"],
-            marks=None,
-        )
-        answer_list.append(answer_row)
+        question_id = question_map.get(answer["question_id"])
+        if question_id:
+            answer_row = Answers(
+                student_id=kwargs["user_id"],
+                question_id=question_id,
+                answer=answer["answers"],
+                marks=None,
+            )
+            answer_list.append(answer_row)
     await answer_dal.add_answers(answer_list)
 
 async def save_rubrics_in_db(rubrics: List[RubricExtractionModel], **kwargs):
     rubric_dict_list = [rubric.model_dump() for rubric in rubrics]
-    answer_dal = await get_answers_dal()
-    answers_list = await answer_dal.get_answers(kwargs["exam_id"], kwargs["user_id"])
-    mp = {answer.id: answer for answer in answers_list}
+    question_dal = await get_question_dal()
+    questions_list = await question_dal.get_questions(kwargs["exam_id"])
+    mp = {question.question_number: question for question in questions_list}
     for rubric in rubric_dict_list:
         if rubric["question_id"] in mp:
             mp[rubric["question_id"]].rubrics = rubric["rubrics"]
-    await answer_dal.update_answers(mp.values())
+    await question_dal.update_questions(list(mp.values()))
 
 def file_type(page: PageObject) -> FileContentType:
     text = page.extract_text()

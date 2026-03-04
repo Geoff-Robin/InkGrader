@@ -82,6 +82,16 @@ async def test_question_dal(db_session):
     q_updated = await question_dal.get_question(q1.id, exam.id)
     assert q_updated.text == "What is 4+4?"
 
+    q_updated.text = "What is 5+5?"
+    q2_fetched = await question_dal.get_question(q2.id, exam.id)
+    q2_fetched.text = "What is 6+6?"
+    await question_dal.update_questions([q_updated, q2_fetched])
+
+    q1_again = await question_dal.get_question(q1.id, exam.id)
+    q2_again = await question_dal.get_question(q2.id, exam.id)
+    assert q1_again.text == "What is 5+5?"
+    assert q2_again.text == "What is 6+6?"
+
     await question_dal.delete_question(q1.id, exam.id)
     questions_after = await question_dal.get_questions(exam.id)
     assert len(questions_after) == 1
@@ -96,11 +106,11 @@ async def test_answers_dal(db_session):
     await exam_dal.create_exam(exam)
 
     question_dal = QuestionDAL(db_session)
-    q1 = Question(exam_id=exam.id, question_number="1", text="What is 2+2?", max_marks=5, topic="Math", question_type="Short")
+    q1 = Question(exam_id=exam.id, question_number="1", text="What is 2+2?", max_marks=5, topic="Math", question_type="Short", rubrics="Correct Answer: 4")
     await question_dal.add_question(q1)
 
     answers_dal = AnswersDAL(db_session)
-    ans1 = Answers(student_id=student.id, question_id=q1.id, answer="4", rubrics="Correct Answer: 4")
+    ans1 = Answers(student_id=student.id, question_id=q1.id, answer="4")
 
     await answers_dal.add_answers([ans1])
 

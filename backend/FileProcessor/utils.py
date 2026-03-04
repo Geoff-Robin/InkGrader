@@ -87,7 +87,6 @@ async def process_rag_material(
                 text += page.extract_text()
     else:
         raise ValueError(f"Unsupported file type: {filename}")
-    # TODO: Use chonkie
     client = InferenceClient()
     MODEL = "sentence-transformers/all-MiniLM-L6-v2"
     recursive_chunker = RecursiveChunker(chunk_size = 1000)
@@ -97,7 +96,7 @@ async def process_rag_material(
     knowledge_base_dal = await get_knowledge_base_dal()
     knowledge_base_rows = []
     for embedding, chunk in zip(embeddings, initial_chunks):
-        knowledge_base_rows.append(KnowledgeBase(exam_id=kwargs["exam_id"], embedding=embedding, chunk=chunk.text))
+        knowledge_base_rows.append(KnowledgeBase(exam_id=kwargs["exam_id"], vector=embedding, content=chunk.text))
     await knowledge_base_dal.add_knowledge(knowledge_base_rows)
 
 
@@ -119,7 +118,7 @@ async def extract_and_save_answers(
     Returns:
         None
     """
-    exam_id = kwargs.get("user_id")
+    exam_id = kwargs.get("exam_id")
     answers = ""
     for i in range(len(file_streams)):
         filename = filenames[i].lower()
@@ -139,10 +138,11 @@ async def extract_and_save_answers(
                     answers += page.extract_text()
     extraction_agent = ExtractionAgent()
     question_dal = await get_question_dal()
-    questions_cursor = await question_dal.get_questions(UUID(exam_id))
+    parsed_exam_id = UUID(exam_id) if not isinstance(exam_id, UUID) else exam_id
+    questions_cursor = await question_dal.get_questions(parsed_exam_id)
     query = "Question Paper:\n"
     for question in questions_cursor:
-        query += str(question["question_number"]) + " " + question["text"] + "\n"
+        query += str(question.question_number) + " " + question.text + "\n"
     query += "\nAnswer Body to be extracted\n\n" + answers
     extracted_answers = await extraction_agent.extract_answers(query)
     await save_answers_in_db(
@@ -167,4 +167,4 @@ async def extract_and_save_rubric(file_stream: BytesIO, filename: str, **kwargs)
     else:
         raise ValueError("Unsupported file type")
     rubric = await extraction_agent.extract_rubrics(file_content)
-    await save_rubrics_in_db(rubric=rubric, **kwargs)
+    await save_rubrics_in_db(rubrics=rubric, **kwargs)

@@ -31,7 +31,7 @@ class GradingAgent:
         self.groq = Groq(api_key=self.api_key)
         self.exam_id = exam_id
 
-    async def grade(self, query: str) -> Optional[GradingAgentOutput]:
+    async def grade(self, query: str, max_marks: int) -> Optional[GradingAgentOutput]:
         try:
             response = await asyncio.to_thread(
                 self.groq.chat.completions.create,
@@ -39,7 +39,11 @@ class GradingAgent:
                 messages=[
                     {
                         "role": "user",
-                        "content": GRADING_AGENT_PROMPT.format(query=query),
+                        "content": GRADING_AGENT_PROMPT.format(max_marks=max_marks),
+                    },
+                    {
+                        "role": "user",
+                        "content": query,
                     }
                 ],
                 response_format={

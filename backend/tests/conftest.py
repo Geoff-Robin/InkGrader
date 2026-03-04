@@ -3,16 +3,16 @@ import pytest_asyncio
 import os
 import sys
 import asyncio
-
-from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
-from Database.models import Base
 from dotenv import load_dotenv
-
-if sys.platform == "win32":
-    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
 load_dotenv()
 
+from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+from sqlalchemy import text
+from Database.models import Base
+
+if sys.platform == "win32":
+    asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 @pytest_asyncio.fixture(scope="function")
 async def db_session():
     # Use POSTGRES_URL_DEV for database connection as requested
