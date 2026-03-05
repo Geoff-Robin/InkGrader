@@ -12,13 +12,13 @@ class AnswersDAL:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def get_answers(self, exam_id: uuid.UUID, user_id: uuid.UUID) -> List[Answers]:
+    async def get_answers(self, exam_id: uuid.UUID, student_id: uuid.UUID) -> List[Answers]:
         stmt = (
             select(Answers)
             .join(Question, Answers.question_id == Question.id)
             .where(
                 Question.exam_id == exam_id,
-                Answers.student_id == user_id,
+                Answers.student_id == student_id,
             )
         )
         result = await self.session.execute(stmt)
@@ -39,13 +39,13 @@ class AnswersDAL:
 
         await self.session.commit()
 
-    async def delete_answers(self, exam_id: uuid.UUID, user_id: uuid.UUID) -> int:
+    async def delete_answers(self, exam_id: uuid.UUID, student_id: uuid.UUID) -> int:
         query = (
             select(Answers)
             .join(Question, Answers.question_id == Question.id)
             .where(
                 Question.exam_id == exam_id,
-                Answers.student_id == user_id,
+                Answers.student_id == student_id,
             )
         )
         result = await self.session.execute(query)

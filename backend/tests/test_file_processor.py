@@ -101,14 +101,13 @@ async def test_process_rag_material(db_session, mock_inference_client):
 
 @pytest.mark.asyncio
 async def test_extract_and_save_answers(db_session, mock_extraction_agent):
-    from Database.student_dal import StudentDAL
-    student_dal = StudentDAL(db_session)
-    student = await student_dal.create_student(marks=0)
-
     exam_dal = ExamDAL(db_session)
     exam = Exam(user_id="test_user", exam_name="Test Exam Answers")
     await exam_dal.create_exam(exam)
 
+    from Database.student_dal import StudentDAL
+    student_dal = StudentDAL(db_session)
+    student = await student_dal.create_student(exam_id=exam.id, marks=0)
     question_dal = QuestionDAL(db_session)
     await question_dal.add_question(Question(
         exam_id=exam.id,

@@ -66,8 +66,8 @@ class Student(Base):
     __tablename__ = "students"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    exam_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("exams.id"), nullable=False)
     marks: Mapped[int | None] = mapped_column(Integer)
-
     answers: Mapped[list[Answers]] = relationship(
         back_populates="student",
         cascade="all, delete-orphan",

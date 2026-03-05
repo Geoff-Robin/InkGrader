@@ -9,14 +9,20 @@ class StudentDAL:
     def __init__(self, session: AsyncSession):
         self.session = session
 
-    async def create_student(self, *, marks=None):
+    async def create_student(self, exam_id: uuid.UUID, *, marks=None):
         student = Student(
+            exam_id=exam_id,
             marks=marks,
         )
         self.session.add(student)
         await self.session.commit()
         await self.session.refresh(student)
         return student
+
+    async def get_students(self, exam_id: uuid.UUID):
+        query = select(Student).where(Student.exam_id == exam_id)
+        result = await self.session.execute(query)
+        return result.scalars().all()
 
     async def get_student(self, student_id: uuid.UUID):
         query = select(Student).where(Student.id == student_id)
@@ -56,4 +62,4 @@ class StudentDAL:
 
 async def get_student_dal():
     async with async_session() as session:
-        yield StudentDAL(session)
+        return StudentDAL(session)
