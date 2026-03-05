@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { cn } from "../../lib/utils";
 import { Button } from "../ui/button";
+import { authClient } from "@/lib/auth-client";
 
 const navItems = [
     { icon: LayoutDashboard, label: "Overview", href: "/home" },
@@ -68,12 +69,18 @@ export function Sidebar() {
                 <Button
                     variant="ghost"
                     className="w-full justify-start gap-3 text-muted-foreground hover:text-destructive hover:bg-destructive/10 rounded-xl px-3"
-                    asChild
+                    onClick={async () => {
+                        await authClient.signOut({
+                            fetchOptions: {
+                                onSuccess: () => {
+                                    window.location.href = "/login";
+                                },
+                            },
+                        });
+                    }}
                 >
-                    <Link href="/api/auth/sign-out">
-                        <LogOut className="w-4 h-4" />
-                        <span>Sign Out</span>
-                    </Link>
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
                 </Button>
             </div>
         </aside>

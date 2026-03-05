@@ -1,8 +1,7 @@
 import { relations } from "drizzle-orm";
-import { pgSchema, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
+import { pgTable, text, timestamp, boolean, index } from "drizzle-orm/pg-core";
 
-const schema = pgSchema(process.env.DEV === "true" ? "dev" : "prod");
-export const user = schema.table("user", {
+export const user = pgTable("user", {
   id: text("id").primaryKey(),
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
@@ -15,7 +14,7 @@ export const user = schema.table("user", {
     .notNull(),
 });
 
-export const session = schema.table(
+export const session = pgTable(
   "session",
   {
     id: text("id").primaryKey(),
@@ -34,7 +33,7 @@ export const session = schema.table(
   (table) => [index("session_userId_idx").on(table.userId)],
 );
 
-export const account = schema.table(
+export const account = pgTable(
   "account",
   {
     id: text("id").primaryKey(),
@@ -58,7 +57,7 @@ export const account = schema.table(
   (table) => [index("account_userId_idx").on(table.userId)],
 );
 
-export const verification = schema.table(
+export const verification = pgTable(
   "verification",
   {
     id: text("id").primaryKey(),
