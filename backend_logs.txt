@@ -1,0 +1,100 @@
+    server   Documentation at http://0.0.0.0:8000/docs
+ 
+             Logs:
+ 
+      INFO   Started server process [80]
+INFO:uvicorn.error:Started server process [80]
+      INFO   Waiting for application startup.
+INFO:uvicorn.error:Waiting for application startup.
+2026-03-05 19:25:01,108 [32mINFO[0m     - grading_task_queue |            - `GradingTask` waiting for messages
+      INFO   Application startup complete.
+INFO:uvicorn.error:Application startup complete.
+      INFO   Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+INFO:uvicorn.error:Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
+      INFO   172.17.0.1:42256 - "GET /api/exam/ HTTP/1.1" 200
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754656853080>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/usr/lib/python3.12/weakref.py:415: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754656853080>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  return self.data[ref(key)]
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2?expand=inferenceProviderMapping "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: GET https://huggingface.co/api/models/sentence-transformers/all-MiniLM-L6-v2 "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://router.huggingface.co/hf-inference/models/sentence-transformers/all-MiniLM-L6-v2/pipeline/feature-extraction "HTTP/1.1 200 OK"
+      INFO   172.17.0.1:39082 - "POST /api/exam/ HTTP/1.1" 200
+      INFO   172.17.0.1:39082 - "GET /api/exam/ HTTP/1.1" 200
+      INFO   172.17.0.1:39082 - "GET /api/exam/ HTTP/1.1" 200
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x75465447d700>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+sys:1: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x75465447d700>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546541cb020>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+sys:1: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546541cb020>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+      INFO   172.17.0.1:39082 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:56660 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:54772 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:54772 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=true
+             HTTP/1.1" 200
+      INFO   172.17.0.1:47178 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:47194 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:33994 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654372c30>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/app/Database/student_dal.py:18: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654372c30>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  await self.session.commit()
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654373fb0>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/app/Database/student_dal.py:18: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654373fb0>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  await self.session.commit()
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654416150>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/app/Database/student_dal.py:18: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654416150>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  await self.session.commit()
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654371460>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/app/Database/student_dal.py:18: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x754654371460>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  await self.session.commit()
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546541cbd10>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/app/Database/student_dal.py:18: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546541cbd10>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  await self.session.commit()
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546541cb800>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+/app/Database/student_dal.py:18: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546541cb800>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+  await self.session.commit()
+      INFO   172.17.0.1:34018 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+ERROR:sqlalchemy.pool.impl.AsyncAdaptedQueuePool:The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546544159d0>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+<frozen _collections_abc>:868: SAWarning: The garbage collector is trying to clean up non-checked-in connection <AdaptedConnection <psycopg.AsyncConnection [INTRANS] (host=aws-1-ap-southeast-1.pooler.supabase.com port=6543 user=postgres.vkrvrldvbouvecrtodyr database=postgres) at 0x7546544159d0>>, which will be dropped, as it cannot be safely terminated.  Please ensure that SQLAlchemy pooled connections are returned to the pool explicitly, either by calling ``close()`` or by using appropriate context managers to manage their lifecycle.
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+INFO:httpx:HTTP Request: POST https://api.groq.com/openai/v1/chat/completions "HTTP/1.1 200 OK"
+      INFO   172.17.0.1:53126 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:34006 - "POST                                           
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/answers HTTP/1.1"   
+             500
+      INFO   172.17.0.1:53142 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 200
+      INFO   172.17.0.1:36714 - "POST                                           
+             /api/exam/872722e7-97cc-414c-92f0-988f2c4dadbb/answers HTTP/1.1"   
+             400
+      INFO   172.17.0.1:46544 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 500
+      INFO   172.17.0.1:46544 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 500
+      INFO   172.17.0.1:46544 - "GET                                            
+             /api/exam/70313c11-4922-469e-90db-3ceab981cf32/students?graded=fals
+             e HTTP/1.1" 500
