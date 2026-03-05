@@ -1,5 +1,4 @@
-from pydantic import BaseModel, Field, field_validator, ConfigDict
-from typing import Optional
+from pydantic import BaseModel, Field, ConfigDict
 
 class QuestionExtractionModel(BaseModel):
     model_config = ConfigDict(extra="forbid")

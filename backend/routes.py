@@ -13,7 +13,6 @@ from uuid import UUID
 from Database.exam_dal import ExamDAL
 from Database.questions_dal import QuestionDAL
 from Database.answers_dal import AnswersDAL
-from Database.knowledge_base_dal import KnowledgeBaseDAL
 from Database.models import Exam
 from io import BytesIO
 from typing import Optional
@@ -127,7 +126,6 @@ async def submit_answers(request: Request, background_tasks: BackgroundTasks):
 
         background_tasks.add_task(process_answers_in_bg)
 
-        # Return stringified student IDs immediately
         return {"message": "Answers submitted successfully. Extraction and grading started.", "student_ids": [str(sid) for sid in student_ids]}
     except HTTPException as e:
         raise e

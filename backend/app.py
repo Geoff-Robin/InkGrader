@@ -8,10 +8,8 @@ import asyncio
 import sys
 from dotenv import load_dotenv
 
-# MUST be called before importing any local modules that use environment variables
 load_dotenv()
 
-# Fix for psycopg async mode on Windows
 if sys.platform == 'win32':
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 

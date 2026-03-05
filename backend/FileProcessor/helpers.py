@@ -3,7 +3,6 @@ from pypdf._page import PageObject
 import base64
 from Agents.models import QuestionExtractionModel, AnswerExtractionModel, RubricExtractionModel
 from typing import List
-from uuid import UUID
 from Database.config import async_session
 from Database.questions_dal import QuestionDAL
 from Database.models import Question, Answers
