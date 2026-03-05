@@ -8,12 +8,21 @@ from Database.models import Student, Exam, Question, Answers, KnowledgeBase
 
 @pytest.mark.asyncio
 async def test_student_dal(db_session):
+    exam_dal = ExamDAL(db_session)
+    exam = Exam(user_id="dummy_user_student_dal", exam_name="Student Test Exam")
+    await exam_dal.create_exam(exam)
+
     student_dal = StudentDAL(db_session)
 
     # Test create student
-    student = await student_dal.create_student(marks=95)
+    student = await student_dal.create_student(exam_id=exam.id, marks=95)
+    student2 = await student_dal.create_student(exam_id=exam.id, marks=80)
     assert student.id is not None
     assert student.marks == 95
+
+    # Test get students by exam
+    students = await student_dal.get_students(exam.id)
+    assert len(students) == 2
 
     # Test get student
     fetched = await student_dal.get_student(student.id)
@@ -98,12 +107,12 @@ async def test_question_dal(db_session):
 
 @pytest.mark.asyncio
 async def test_answers_dal(db_session):
-    student_dal = StudentDAL(db_session)
-    student = await student_dal.create_student(marks=0)
-
     exam_dal = ExamDAL(db_session)
     exam = Exam(user_id="dummy_user_3", exam_name="Test Exam 2")
     await exam_dal.create_exam(exam)
+
+    student_dal = StudentDAL(db_session)
+    student = await student_dal.create_student(exam_id=exam.id, marks=0)
 
     question_dal = QuestionDAL(db_session)
     q1 = Question(exam_id=exam.id, question_number="1", text="What is 2+2?", max_marks=5, topic="Math", question_type="Short", rubrics="Correct Answer: 4")
