@@ -6,13 +6,13 @@
 
 ## ✨ Features
 
-- **📷 Intelligent OCR Extraction**: High-accuracy extraction of handwritten text from scans and PDFs using multi-engine OCR strategies.
+- **📷 Intelligent OCR Extraction**: High-accuracy extraction of handwritten text from scans and PDFs.
 - **🤖 Multi-Agent AI System**: 
   - **Extraction Agent**: Seamlessly parses raw OCR text into structured question/answer formats.
   - **Grading Agent**: Evaluates student responses based on context, accuracy, and provided reference materials.
 - **📚 RAG-Enhanced Evaluation**: Powered by PostgreSQL `pgvector`, the system cross-references student answers with official marking schemes for highly accurate grading.
 - **⚡ Background Processing**: Leverages FastStream and Redis to handle grading tasks asynchronously in the background.
-- **📊 Modern Dashboard**: A premium Next.js 15 dashboard for managing exams, uploading student work, and viewing detailed feedback.
+- **📊 Modern Dashboard**: A premium Next.js 16 App Router dashboard for managing exams, uploading student work, and viewing detailed feedback.
 - **🔐 Enterprise-Grade Auth**: Secure authentication flow utilizing **Better Auth** with Drizzle ORM and PostgreSQL.
 
 ---
@@ -21,14 +21,15 @@
 
 ### Backend (Python/FastAPI)
 - **Framework**: [FastAPI](https://fastapi.tiangolo.com/) (Asynchronous high-performance API)
+- **Package Manager**: [uv](https://docs.astral.sh/uv/)
 - **AI/LLM**: [Groq API](https://wow.groq.com/), Hugging Face Inference API for embeddings
 - **Vector Search**: PostgreSQL `pgvector` extension
-- **Database**: PostgreSQL (via SQLAlchemy)
+- **Database ORM**: SQLAlchemy 2.0
 - **Background Tasks**: FastStream with Redis
 - **OCR**: OCR.Space API / Pypdf
 
 ### Frontend (Next.js/React)
-- **Framework**: [Next.js 15](https://nextjs.org/) (App Router)
+- **Framework**: [Next.js 16](https://nextjs.org/) (App Router)
 - **Styling**: [Tailwind CSS 4](https://tailwindcss.com/)
 - **Components**: shadcn/ui, Lucide Icons, Radix UI
 - **Data Fetching**: React Query (@tanstack/react-query)
@@ -40,7 +41,7 @@
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Python 3.10+
+- Python 3.12+ (Using `uv` for dependency management)
 - Node.js 18+
 - PostgreSQL Database (with `pgvector` enabled)
 - Redis Instance
@@ -48,28 +49,29 @@
 - [Hugging Face API Key](https://huggingface.co/)
 - [OCR.Space API Key](https://ocr.space/ocrapi)
 
+*Tip: You can quickly spin up PostgreSQL with pgvector and Redis using Docker:*
+```bash
+docker run -d --name pgvector -e POSTGRES_PASSWORD=pass -p 5432:5432 pgvector/pgvector:pg16
+docker run -d --name redis -p 6379:6379 redis
+```
+
 ### 1. Backend Setup
 1. Navigate to the backend:
    ```bash
    cd backend
    ```
-2. Setup environment:
+2. Create your environment variables file:
    ```bash
-   python -m venv .venv
-   source .venv/bin/activate  # Windows: .venv\Scripts\activate
+   cp .env.example .env
    ```
-3. Install dependencies:
+   *Fill in your API keys, database URL, and Redis URL in the `.env` file.*
+3. Install dependencies using `uv`:
    ```bash
-   pip install -r requirements.txt
+   uv sync
    ```
-4. Configure `.env` (refer to [Configuration](#configuration)).
-5. Start the server (using Docker is recommended):
+4. Start the backend development server:
    ```bash
-   docker-compose up
-   ```
-   Or run the app locally:
-   ```bash
-   python app.py
+   uv run fastapi dev app.py
    ```
 
 ### 2. Frontend Setup
@@ -77,15 +79,20 @@
    ```bash
    cd frontend
    ```
-2. Install dependencies:
+2. Create your environment variables file:
+   ```bash
+   cp .env.example .env
+   ```
+   *Ensure you configure `DATABASE_URL`, Google OAuth keys (if used), and Better Auth secret.*
+3. Install dependencies:
    ```bash
    npm install
    ```
-3. Setup the database schema for authentication:
+4. Setup the database schema for authentication via Drizzle:
    ```bash
    npm run db:push
    ```
-4. Start the development server:
+5. Start the Next.js development server:
    ```bash
    npm run dev
    ```
@@ -94,33 +101,25 @@
 
 ## ⚙️ Configuration
 
-Create a `.env` file in the project directories:
-
 ### Backend (`backend/.env`)
 ```env
-POSTGRES_URL=postgresql+psycopg://user:pass@localhost/db
-
-# API Keys
-GROQ_API_KEY=your_groq_key
-OCR_API_KEY=your_ocr_key
-HF_API_KEY=your_hf_key
-
-# Redis
+POSTGRES_URL=postgresql+psycopg://user:pass@localhost:5432/postgres
 REDIS_URL=redis://localhost:6379
-
-# Frontend Callback
-FRONTEND_URL=http://localhost:3000
+HF_API_KEY=YOUR_HUGGING_FACE_ACCESS_TOKEN
+GROQ_API_KEY=YOUR_GROQ_API_KEY
+OCR_API_KEY=YOUR_OCR_API_KEY
 ```
 
-### Frontend (`frontend/.env.local`)
+### Frontend (`frontend/.env`)
 ```env
-BETTER_AUTH_SECRET=your_secret_key
-BETTER_AUTH_URL=http://localhost:3000
-DATABASE_URL=postgresql://user:pass@localhost/db
-BACKEND_URL=http://localhost:8000
-NEXT_PUBLIC_APP_URL = http://localhost:3000
-GOOGLE_CLIENT_ID = YOUR_GOOGLE_OAUTH_ID
-GOOGLE_CLIENT_SECRET = YOUR GOOGLE_OAUTH_SECRET
+DATABASE_URL=postgresql://user:pass@localhost:5432/postgres
+DEV=true
+GOOGLE_CLIENT_ID=YOUR_GOOGLE_OAUTH_ID
+GOOGLE_CLIENT_SECRET=YOUR_GOOGLE_OAUTH_SECRET
+BETTER_AUTH_URL=http://localhost:3000/
+NEXT_PUBLIC_APP_URL=http://localhost:3000/
+BETTER_AUTH_SECRET=YOUR_BETTER_AUTH_SECRET
+BACKEND_URL=http://127.0.0.1:8000/
 ```
 
 ---
@@ -128,10 +127,17 @@ GOOGLE_CLIENT_SECRET = YOUR GOOGLE_OAUTH_SECRET
 ## 📂 Project Structure
 
 - `backend/`: FastAPI application, AI agents, and file processing logic.
-- `frontend/`: Next.js 15 dashboard and user interface.
-- `backend/Agents/`: The "brains"—Extraction and Grading agents.
-- `backend/FileProcessor/`: OCR and document parsing utilities.
+  - `Agents/`: The "brains"—Extraction and Grading agents.
+  - `Database/`: SQLAlchemy models and Data Access Layers (DALs).
+  - `FileProcessor/`: OCR and document parsing utilities.
+  - `Grading/`: FastStream background tasks for evaluating student answers.
+- `frontend/`: Next.js 16 App Router interface and Better Auth integration.
+  - `app/`: Next.js routes and layouts.
+  - `components/`: Reusable UI components powered by shadcn/ui.
+  - `drizzle/`: Drizzle ORM schemas and migrations.
+- `sample_data/`: Sample reference materials, rubrics, and student submissions for testing the system.
 
+---
 
 ## 📜 License
 
@@ -141,5 +147,4 @@ Distributed under the MIT License. See `LICENSE` for more information.
 
 ## 📧 Contact
 
-**Project Lead**: [Geoff-Robin]
 **Project Link**: [https://github.com/Geoff-Robin/InkGrader](https://github.com/Geoff-Robin/InkGrader)
