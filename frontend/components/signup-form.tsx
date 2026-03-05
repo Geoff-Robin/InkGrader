@@ -28,7 +28,6 @@ export function SignUpForm({
   className,
   ...props
 }: React.ComponentProps<"div">) {
-  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [isLoading, setIsLoading] = useState(false);
@@ -43,7 +42,7 @@ export function SignUpForm({
     const { data, error } = await authClient.signUp.email({
       email,
       password,
-      name,
+      name: email,
       callbackURL: "/home",
     });
 
@@ -99,18 +98,6 @@ export function SignUpForm({
                 </FieldError>
               )}
 
-              <Field>
-                <FieldLabel htmlFor="name">Full Name</FieldLabel>
-                <Input
-                  id="name"
-                  type="text"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  placeholder="John Doe"
-                  required
-                  disabled={isLoading}
-                />
-              </Field>
 
               <Field>
                 <FieldLabel htmlFor="email">Email</FieldLabel>

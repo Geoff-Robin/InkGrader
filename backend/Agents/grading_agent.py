@@ -5,19 +5,14 @@ import logging
 import asyncio
 from typing import Optional
 
-from groq import Groq
-from pydantic import BaseModel, Field, ValidationError
+from groq import AsyncGroq
+from pydantic import BaseModel, Field, ValidationError, ConfigDict
 
 from Agents.prompts import GRADING_AGENT_PROMPT
-
+from Agents.models import GradingAgentOutput
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
-
-class GradingAgentOutput(BaseModel):
-    question_id: int = Field(...)
-    marks: int = Field(...)
 
 
 class GradingAgent:
@@ -28,17 +23,16 @@ class GradingAgent:
             )
 
         self.api_key = api_key or os.environ["GROQ_API_KEY"]
-        self.groq = Groq(api_key=self.api_key)
+        self.groq = AsyncGroq(api_key=self.api_key)
         self.exam_id = exam_id
 
     async def grade(self, query: str, max_marks: int) -> Optional[GradingAgentOutput]:
         try:
-            response = await asyncio.to_thread(
-                self.groq.chat.completions.create,
+            response = await self.groq.chat.completions.create(
                 model="openai/gpt-oss-120b",
                 messages=[
                     {
-                        "role": "user",
+                        "role": "system",
                         "content": GRADING_AGENT_PROMPT.format(max_marks=max_marks),
                     },
                     {

@@ -11,7 +11,7 @@ import {
   FieldError,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { authClient } from "@/lib/auth-client";
@@ -28,14 +28,21 @@ export function LoginForm({
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
 
+  const emailRef = useRef<HTMLInputElement>(null);
+  const passwordRef = useRef<HTMLInputElement>(null);
+
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError(null);
 
+    // Use values directly from the DOM to handle browser autofill issues
+    const loginEmail = emailRef.current?.value || email;
+    const loginPassword = passwordRef.current?.value || password;
+
     const { data, error } = await authClient.signIn.email({
-      email,
-      password,
+      email: loginEmail,
+      password: loginPassword,
       callbackURL: "/home",
     });
 
@@ -79,11 +86,13 @@ export function LoginForm({
                 <Input
                   id="email"
                   type="email"
+                  ref={emailRef}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   placeholder="m@example.com"
                   required
                   disabled={isLoading}
+                  autoComplete="email"
                 />
               </Field>
               <Field>
@@ -99,10 +108,12 @@ export function LoginForm({
                 <Input
                   id="password"
                   type="password"
+                  ref={passwordRef}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   required
                   disabled={isLoading}
+                  autoComplete="current-password"
                 />
               </Field>
               <Field>

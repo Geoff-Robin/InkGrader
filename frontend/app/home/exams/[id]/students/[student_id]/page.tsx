@@ -14,12 +14,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Badge } from "../../../../../../components/ui/badge";
-import { Separator } from "../../../../../../components/ui/separator";
-import { cn } from "../../../../../../lib/utils";
-import { Label } from "../../../../../../components/ui/label";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { Label } from "@/components/ui/label";
 
 import { useQuery } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
 
 interface QuestionResult {
     question_number: number;
@@ -45,18 +46,22 @@ export default function StudentResultPage() {
     const { id, student_id } = useParams();
     const router = useRouter();
 
+    const { data: session } = authClient.useSession();
+    const userId = session?.user?.id;
+
     const { data: result, isLoading: loading, error } = useQuery<StudentResult>({
-        queryKey: ["student-result", id, student_id],
+        queryKey: ["student-result", id, student_id, userId],
         queryFn: async () => {
+            if (!userId) return {} as StudentResult;
             const response = await fetch(`/api/proxy/exam/${id}/students/${student_id}`, {
                 headers: {
-                    "X-User-Id": "default-user",
+                    "X-User-Id": userId,
                 }
             });
             if (!response.ok) throw new Error("Failed to fetch student result");
             return response.json();
         },
-        enabled: !!id && !!student_id,
+        enabled: !!id && !!student_id && !!userId,
     });
 
     if (loading) {

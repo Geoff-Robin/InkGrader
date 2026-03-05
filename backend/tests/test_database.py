@@ -9,7 +9,7 @@ from Database.models import Student, Exam, Question, Answers, KnowledgeBase
 @pytest.mark.asyncio
 async def test_student_dal(db_session):
     exam_dal = ExamDAL(db_session)
-    exam = Exam(user_id="dummy_user_student_dal", exam_name="Student Test Exam")
+    exam = Exam(user_id="user_1", exam_name="Student Test Exam")
     await exam_dal.create_exam(exam)
 
     student_dal = StudentDAL(db_session)
@@ -45,7 +45,7 @@ async def test_student_dal(db_session):
 @pytest.mark.asyncio
 async def test_exam_dal(db_session):
     exam_dal = ExamDAL(db_session)
-    exam = Exam(user_id="dummy_user_1", exam_name="Midterm")
+    exam = Exam(user_id="user_2", exam_name="Midterm")
     await exam_dal.create_exam(exam)
 
     assert exam.id is not None
@@ -72,7 +72,7 @@ async def test_exam_dal(db_session):
 @pytest.mark.asyncio
 async def test_question_dal(db_session):
     exam_dal = ExamDAL(db_session)
-    exam = Exam(user_id="dummy_user_2", exam_name="Test Exam")
+    exam = Exam(user_id="user_3", exam_name="Test Exam")
     await exam_dal.create_exam(exam)
 
     question_dal = QuestionDAL(db_session)
@@ -108,7 +108,7 @@ async def test_question_dal(db_session):
 @pytest.mark.asyncio
 async def test_answers_dal(db_session):
     exam_dal = ExamDAL(db_session)
-    exam = Exam(user_id="dummy_user_3", exam_name="Test Exam 2")
+    exam = Exam(user_id="user_4", exam_name="Test Exam 2")
     await exam_dal.create_exam(exam)
 
     student_dal = StudentDAL(db_session)
@@ -134,13 +134,12 @@ async def test_answers_dal(db_session):
     assert answers_updated[0].answer == "5"
 
     await answers_dal.delete_answers(exam.id, student.id)
-    answers_after = await answers_dal.get_answers(exam.id, student.id)
-    assert len(answers_after) == 0
+    assert len(await answers_dal.get_answers(exam.id, student.id)) == 0
 
 @pytest.mark.asyncio
 async def test_knowledge_base_dal(db_session):
     exam_dal = ExamDAL(db_session)
-    exam = Exam(user_id="dummy_kb_user", exam_name="KB Exam")
+    exam = Exam(user_id="user_5", exam_name="KB Exam")
     await exam_dal.create_exam(exam)
 
     kb_dal = KnowledgeBaseDAL(db_session)

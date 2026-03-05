@@ -6,17 +6,20 @@ Includes PDF and text file handling, OCR integration, and database operations.
 """
 
 import os
+from uuid import UUID
 from FileProcessor import OcrAPI, FileContentType, Engine
 from pypdf import PdfReader
 from io import BytesIO
 from Agents.extraction_agent import ExtractionAgent
 from pypdf import PdfReader
 from io import BytesIO
-from Database import get_question_dal
+from Database.questions_dal import QuestionDAL
+from Database.config import async_session
 from FileProcessor.helpers import *
 from chonkie import RecursiveChunker
 from huggingface_hub import InferenceClient
-from Database import KnowledgeBase, get_knowledge_base_dal
+from Database.models import KnowledgeBase
+from Database.knowledge_base_dal import KnowledgeBaseDAL
 
 async def extract_and_save_questions(
     file_stream: BytesIO, filename: str, **kwargs
@@ -87,17 +90,18 @@ async def process_rag_material(
                 text += page.extract_text()
     else:
         raise ValueError(f"Unsupported file type: {filename}")
-    client = InferenceClient()
     MODEL = "sentence-transformers/all-MiniLM-L6-v2"
+    client = InferenceClient(model=MODEL, api_key=os.environ["HF_API_KEY"])
     recursive_chunker = RecursiveChunker(chunk_size = 1000)
     initial_chunks = recursive_chunker.chunk(text)
     texts = [chunk.text for chunk in initial_chunks]
-    embeddings = [client.feature_extraction(text, model=MODEL) for text in texts]
-    knowledge_base_dal = await get_knowledge_base_dal()
-    knowledge_base_rows = []
-    for embedding, chunk in zip(embeddings, initial_chunks):
-        knowledge_base_rows.append(KnowledgeBase(exam_id=kwargs["exam_id"], vector=embedding, content=chunk.text))
-    await knowledge_base_dal.add_knowledge(knowledge_base_rows)
+    embeddings = [client.feature_extraction(text) for text in texts]
+    async with async_session() as session:
+        knowledge_base_dal = KnowledgeBaseDAL(session)
+        knowledge_base_rows = []
+        for embedding, chunk in zip(embeddings, initial_chunks):
+            knowledge_base_rows.append(KnowledgeBase(exam_id=kwargs["exam_id"], vector=embedding, content=chunk.text))
+        await knowledge_base_dal.add_knowledge(knowledge_base_rows)
 
 
 
@@ -137,12 +141,15 @@ async def extract_and_save_answers(
                 elif file_type(page) == FileContentType.TEXT:
                     answers += page.extract_text()
     extraction_agent = ExtractionAgent()
-    question_dal = await get_question_dal()
-    parsed_exam_id = UUID(exam_id) if not isinstance(exam_id, UUID) else exam_id
-    questions_cursor = await question_dal.get_questions(parsed_exam_id)
-    query = "Question Paper:\n"
-    for question in questions_cursor:
-        query += str(question.question_number) + " " + question.text + "\n"
+
+    async with async_session() as session:
+        question_dal = QuestionDAL(session)
+        parsed_exam_id = UUID(exam_id) if not isinstance(exam_id, UUID) else exam_id
+        questions_cursor = await question_dal.get_questions(parsed_exam_id)
+        
+        query = "Question Paper:\n"
+        for question in questions_cursor:
+            query += str(question.question_number) + " " + question.text + "\n"
     query += "\nAnswer Body to be extracted\n\n" + answers
     extracted_answers = await extraction_agent.extract_answers(query)
     await save_answers_in_db(
@@ -150,6 +157,7 @@ async def extract_and_save_answers(
     )
 async def extract_and_save_rubric(file_stream: BytesIO, filename: str, **kwargs):
     extraction_agent = ExtractionAgent()
+    exam_id = kwargs.get("exam_id")
     file_content = ""
     ocr_engine2 = OcrAPI(
         engine=Engine.ENGINE_2, api_key=os.getenv("OCR_API_KEY", "")
@@ -166,5 +174,18 @@ async def extract_and_save_rubric(file_stream: BytesIO, filename: str, **kwargs)
                 file_content += ocr_engine2.ocr_base64(image_b64)
     else:
         raise ValueError("Unsupported file type")
-    rubric = await extraction_agent.extract_rubrics(file_content)
-    await save_rubrics_in_db(rubrics=rubric, **kwargs)
+
+    # Fetch questions for context to ensure matching IDs
+    async with async_session() as session:
+        question_dal = QuestionDAL(session)
+        parsed_exam_id = UUID(str(exam_id)) if not isinstance(exam_id, UUID) else exam_id
+        questions_cursor = await question_dal.get_questions(parsed_exam_id)
+        
+        query = "Question Paper Context:\n"
+        for question in questions_cursor:
+            query += f"{question.question_number} {question.text}\n"
+            
+    query += "\nRubric Content to be extracted:\n\n" + file_content
+    
+    extracted_rubrics = await extraction_agent.extract_rubrics(query)
+    await save_rubrics_in_db(rubrics=extracted_rubrics, **kwargs)
