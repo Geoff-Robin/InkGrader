@@ -2,10 +2,8 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 import os
 
 db_url = ""
-if(os.getenv("POSTGRES_URL_PROD")):
-    db_url = os.environ["POSTGRES_URL_PROD"]
-elif(os.getenv("POSTGRES_URL_DEV")):
-    db_url = os.environ["POSTGRES_URL_DEV"]
+if(os.getenv("POSTGRES_URL")):
+    db_url = os.environ["POSTGRES_URL"]
 else:
     db_url = "sqlite+aiosqlite:///./test.db"
 engine = create_async_engine(db_url, echo=True)
