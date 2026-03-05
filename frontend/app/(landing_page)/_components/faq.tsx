@@ -47,24 +47,34 @@ const faqs = [
 
 export default function FAQSection() {
   return (
-    <section id="faq" className="relative z-20 w-full max-w-4xl mx-auto mt-24">
-      <h2 className="text-4xl font-extrabold text-center mb-12">FAQ</h2>
-      <Accordion
-        type="single"
-        collapsible
-        className="w-full border rounded-xl divide-y divide-border"
-      >
-        {faqs.map((faq, idx) => (
-          <AccordionItem key={idx} value={`item-${idx}`} className="border-0">
-            <AccordionTrigger className="px-6 py-6 text-xl font-semibold text-left hover:no-underline">
-              {faq.question}
-            </AccordionTrigger>
-            <AccordionContent className="px-6 py-6 text-lg leading-relaxed text-muted-foreground">
-              {faq.answer}
-            </AccordionContent>
-          </AccordionItem>
-        ))}
-      </Accordion>
+    <section id="faq" className="py-24 bg-muted/30 relative">
+      <div className="container mx-auto px-4 max-w-4xl">
+        <div className="text-center mb-16">
+          <h2 className="text-3xl md:text-5xl font-bold tracking-tight mb-4">
+            Frequently Asked Questions
+          </h2>
+          <p className="text-lg text-muted-foreground">
+            Everything you need to know about the platform and how it works.
+          </p>
+        </div>
+
+        <Accordion
+          type="single"
+          collapsible
+          className="w-full space-y-4"
+        >
+          {faqs.map((faq, idx) => (
+            <AccordionItem key={idx} value={`item-${idx}`} className="border rounded-2xl bg-card px-4">
+              <AccordionTrigger className="text-lg font-bold hover:no-underline py-6">
+                {faq.question}
+              </AccordionTrigger>
+              <AccordionContent className="text-muted-foreground text-base leading-relaxed pb-6">
+                {faq.answer}
+              </AccordionContent>
+            </AccordionItem>
+          ))}
+        </Accordion>
+      </div>
     </section>
   );
 }

@@ -4,6 +4,7 @@ import { db } from "./db";
 import { user, session, account, verification } from "@/auth-schema";
 
 export const auth = betterAuth({
+  appName: "InkGrader",
   database: drizzleAdapter(db, {
     provider: "pg",
     schema: {
