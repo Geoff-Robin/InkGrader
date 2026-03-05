@@ -31,6 +31,10 @@ class Exam(Base):
         back_populates="exam",
         cascade="all, delete-orphan",
     )
+    answers: Mapped[list["Answers"]] = relationship(
+        back_populates="exam",
+        cascade="all, delete-orphan",
+    )
 
 
 class Question(Base):
@@ -55,12 +59,14 @@ class Answers(Base):
     __tablename__ = "answers"
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    exam_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("exams.id"), nullable=False)
     student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("students.id"), nullable=False)
     question_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("questions.id"), nullable=False)
     answer: Mapped[str] = mapped_column(String(1000), nullable=False)
     marks: Mapped[int] = mapped_column(Integer(), nullable=True)
     student: Mapped["Student"] = relationship(back_populates="answers")
     question: Mapped["Question"] = relationship(back_populates="answers")
+    exam: Mapped["Exam"] = relationship(back_populates="answers")
 
 class Student(Base):
     __tablename__ = "students"

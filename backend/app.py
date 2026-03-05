@@ -39,12 +39,13 @@ app = FastAPI(lifespan=lifespan, debug=True)
 app.include_router(exam_router, prefix="/api/exam")
 app.include_router(grading_task_router)
 
-@app.post("/api")
-async def root():
+@app.get("/api/health")
+async def check_health():
     return {"message": "Welcome to the InkGrader API"}
 
 app.add_middleware(
     CORSMiddleware,
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

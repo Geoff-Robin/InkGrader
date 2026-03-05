@@ -26,21 +26,21 @@ Return a list of question objects in the following format:
 
 [
   {
-    "id": "<Question ID>",
+    "question_id": "<Question ID>",
     "question": "<Full question text>",
-    "marks": <number or null>,
+    "marks": <number>,
     "topic": "<Specific topic>",
-    "type": "<Question type>"
+    "question_type": "<Question type>"
   },
   ...
 ]
 
 Guidelines:
 - Do not miss any questions.
-- If the marks are not explicitly mentioned, return "marks": null.
+- If the marks are not explicitly mentioned, return "marks": 5 (as a default).
 - Be specific with the topic. For example, instead of “Biology,” write “Photosynthesis in Plants.”
 - For compound questions, treat each part as a separate question if they ask for different things.
-- Ensure all questions in the output have a unique ID. If not provided, use sequential IDs like "Q1", "Q2", etc.
+- Ensure all questions in the output have a unique question_id. If not provided, use sequential IDs like "Q1", "Q2", etc.
 - Your goal is to help organize and classify educational content for automated analysis.
 """
 
@@ -54,15 +54,12 @@ You are an intelligent academic assistant responsible for extracting answers fro
 
 For each answer, extract the following:
 
-1. ID - A unique identifier corresponding to the related question and match id's to question given to you. If not provided, assign a numeric ID yourself starting from 1 (e.g., 1, 2, 3...).
-2. Answers - The full answer text related to the question ID. Include all key points, formulas, or steps if present.
-
 Output Format -
 Return a list of answer objects in the following format:
 
 [
   {
-    "id": <string>,
+    "question_id": "<ID>",
     "answers": "<Answer text>"
   },
   ...
@@ -71,10 +68,9 @@ Return a list of answer objects in the following format:
 Guidelines:
 - If the answer is in parts (e.g., multiple bullet points or steps), include all parts as a single string, preserving formatting if needed.
 - Do not make up content. Only include what is explicitly present in the source material.
-- If an answer is missing or incomplete, still return the question ID and use an empty string ("") for the answer.
+- If an answer is missing or incomplete, still return the question_id and use an empty string ("") for the answer.
 - Keep your output concise but complete, including definitions, derivations, calculations, or examples as shown.
-
-You are helping build a structured dataset of answers for educational analysis and retrieval.
+- You are helping build a structured dataset of answers for educational analysis and retrieval.
 """
 
 

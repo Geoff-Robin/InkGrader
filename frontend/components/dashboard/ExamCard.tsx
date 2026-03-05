@@ -7,8 +7,7 @@ import Link from "next/link";
 
 interface Exam {
     id: string;
-    name: string;
-    description?: string;
+    exam_name: string;
     created_at?: string;
     student_count?: number;
 }
@@ -25,10 +24,7 @@ export function ExamCard({ exam }: { exam: Exam }) {
                         Academic
                     </div>
                 </div>
-                <CardTitle className="text-xl font-bold mt-4 line-clamp-1">{exam.name}</CardTitle>
-                <p className="text-sm text-muted-foreground line-clamp-2 min-h-[40px] mt-1">
-                    {exam.description || "No description provided for this exam."}
-                </p>
+                <CardTitle className="text-xl font-bold mt-4 line-clamp-1">{exam.exam_name}</CardTitle>
             </CardHeader>
 
             <CardContent className="pb-6">

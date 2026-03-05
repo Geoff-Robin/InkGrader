@@ -4,7 +4,7 @@ from pydantic import TypeAdapter
 import os
 from Agents.models import QuestionExtractionModel, AnswerExtractionModel, RubricExtractionModel
 from Agents.prompts import QUESTION_EXTRACTION_PROMPT, ANSWER_EXTRACTION_PROMPT, RUBRICS_EXTRACTION_PROMPT
-from groq import Groq
+from groq import AsyncGroq
 
 
 class ExtractionAgent:
@@ -13,12 +13,12 @@ class ExtractionAgent:
             api_key = os.environ["GROQ_API_KEY"] or api_key
         else:
             raise ValueError("Environment variable GROQ_API_KEY or api_key argument must be provided")
-        self.client = Groq(api_key=api_key)
+        self.client = AsyncGroq(api_key=api_key)
 
     async def extract_questions(self, questions_text: str) -> List[QuestionExtractionModel]:
         schema = QuestionExtractionModel.model_json_schema()
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {"role": "system", "content": QUESTION_EXTRACTION_PROMPT},
@@ -52,7 +52,7 @@ class ExtractionAgent:
     async def extract_answers(self, answers_text: str) -> List[AnswerExtractionModel]:
         schema = AnswerExtractionModel.model_json_schema()
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {"role": "system", "content": ANSWER_EXTRACTION_PROMPT},
@@ -86,7 +86,7 @@ class ExtractionAgent:
     async def extract_rubrics(self, rubrics_text: str) -> List[RubricExtractionModel]:
         schema = RubricExtractionModel.model_json_schema()
 
-        response = self.client.chat.completions.create(
+        response = await self.client.chat.completions.create(
             model="meta-llama/llama-4-scout-17b-16e-instruct",
             messages=[
                 {"role": "system", "content": RUBRICS_EXTRACTION_PROMPT},

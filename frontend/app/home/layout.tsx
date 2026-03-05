@@ -1,4 +1,4 @@
-import { Sidebar } from "../../components/dashboard/Sidebar";
+import { Navbar } from "../../components/dashboard/Navbar";
 
 export default function HomeLayout({
   children,
@@ -6,9 +6,9 @@ export default function HomeLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen bg-background">
-      <Sidebar />
-      <main className="flex-1 flex flex-col relative overflow-y-auto">
+    <div className="flex flex-col min-h-screen bg-background">
+      <Navbar />
+      <main className="flex-1 relative overflow-y-auto">
         <div className="container mx-auto p-8 max-w-7xl animate-fade-in">
           {children}
         </div>

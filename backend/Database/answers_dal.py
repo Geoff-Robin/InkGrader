@@ -30,13 +30,7 @@ class AnswersDAL:
 
     async def update_answers(self, answers: Iterable[Answers]) -> None:
         for ans in answers:
-            query = select(Answers).where(Answers.id == ans.id)
-            result = await self.session.execute(query)
-            existing_ans = result.scalar()
-            if existing_ans:
-                existing_ans.answer = ans.answer
-                existing_ans.marks = ans.marks
-
+            await self.session.merge(ans)
         await self.session.commit()
 
     async def delete_answers(self, exam_id: uuid.UUID, student_id: uuid.UUID) -> int:

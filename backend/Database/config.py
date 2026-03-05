@@ -6,7 +6,7 @@ if(os.getenv("POSTGRES_URL")):
     db_url = os.environ["POSTGRES_URL"]
 else:
     db_url = "sqlite+aiosqlite:///./test.db"
-engine = create_async_engine(db_url, echo=True)
+engine = create_async_engine(db_url, echo=False, pool_size=50, max_overflow=100, connect_args={"prepare_threshold": None})
 async_session = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 async def get_engine():
     return engine

@@ -8,11 +8,11 @@ import { Alert, AlertDescription, AlertTitle } from "../../components/ui/alert";
 import { CreateExamDialog } from "@/components/dashboard/CreateExamDialog";
 
 import { useQuery } from "@tanstack/react-query";
+import { authClient } from "@/lib/auth-client";
 
 interface Exam {
   id: string;
-  name: string;
-  description?: string;
+  exam_name: string;
   created_at?: string;
   student_count?: number;
 }
@@ -21,22 +21,26 @@ export default function HomePage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isCreateOpen, setIsCreateOpen] = useState(false);
 
+  const { data: session } = authClient.useSession();
+  const userId = session?.user?.id;
+
   const { data: exams = [], isLoading: loading, error, refetch: fetchExams } = useQuery<Exam[]>({
-    queryKey: ["exams"],
+    queryKey: ["exams", userId],
     queryFn: async () => {
+      if (!userId) return [];
       const response = await fetch("/api/proxy/exam", {
         headers: {
-          "X-User-Id": "default-user",
+          "X-User-Id": userId,
         }
       });
       if (!response.ok) throw new Error("Failed to fetch exams");
       return response.json();
-    }
+    },
+    enabled: !!userId,
   });
 
   const filteredExams = exams.filter(exam =>
-    exam.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    exam.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    exam.exam_name.toLowerCase().includes(searchQuery.toLowerCase())
   );
 
   return (
