@@ -1,206 +1,192 @@
 from fastapi import (
     APIRouter,
     Request,
-    Response,
-    Depends,
-    WebSocket,
-    WebSocketDisconnect,
-    BackgroundTasks
 )
-from redis_stream import StreamManager
-import asyncio
-from models import *
-from Auth.utils import get_current_user
-from Auth.utils import ALGORITHM, JWT_SECRET_KEY
-from jwt import decode as jwt_decode, PyJWTError
-from config import ConnectionManager
-from bson import ObjectId
-from grading_task import grading_task
+import base64
+from Database.student_dal import get_student_dal
+from Grading import grading_task_router, GradingInfo
+from FileProcessor.utils import extract_and_save_questions, extract_and_save_answers, extract_and_save_rubric, process_rag_material
+from fastapi.exceptions import HTTPException
+from uuid import UUID
+from Database import get_exam_dal, Exam, get_question_dal, get_answers_dal
+from io import BytesIO
+from typing import Optional
 
 exam_router = APIRouter()
-conn_manager = ConnectionManager()
 
 @exam_router.get("/")
 async def get_exams(
     request: Request,
-    response: Response,
-    user=Depends(get_current_user),
 ):
-    exams =""
-    return exams
+    try:
+        user_id = request.headers.get("X-User-Id")
+        exam_dal = await get_exam_dal()
+        if(user_id):
+            exams = await exam_dal.get_exams(user_id)
+        else:
+            raise HTTPException(status_code=400, detail="X-User-Id header not provided")
+        return exams
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
 @exam_router.post("/")
 async def create_exam_form(
     request: Request,
-    response: Response,
-    user=Depends(get_current_user),
-    form: CreateExamForm = Depends(),
 ):
-    questions_cursor = await request.app.database["Questions"].find_one({"user_id": user["_id"], "exam_name": form.exam_name})
-    if questions_cursor:
-        response.status_code=403
-        return{
-            "message": "Exam form already exists",
-        }
-    question_info = QuestionInfo(
-        file_name=form.questions.filename,
-        questions=BytesIO(await form.questions.read())
-    )
-    answers_info=[]
-    for student_answers in form.student_answers:
-        answers_info.append(AnswerInfo(
-            file_name=student_answers.filename,
-            student_answers=BytesIO(await student_answers.read())
-        ))
-    rag_file_info = RagFileInfo(
-        file_name=form.rag_material.filename,
-        rag_material=BytesIO(await form.rag_material.read())
-    )
-
-    task_key = f"{user['_id']}:{form.exam_name}"
-    grading_task_args= GradingTaskArgs(
-        question_info=question_info,
-        answers_info=answers_info,
-        rag_file_info=rag_file_info,
-        user_id=ObjectId(user["_id"]),
-        db=request.app.database,
-        exam_name=form.exam_name
-    )
-    background_tasks.add_task(grading_task, grading_task_args=grading_task_args)
-    response.status_code = 201
-    return {"message": "Exam created successfully"}
-
-
-@exam_router.websocket_route("/exam/{exam_id}")
-async def exam_socket(websocket: WebSocket):
-    await websocket.accept()
-    exam_id = websocket.path_params.get("exam_id")
-    if not exam_id:
-        await websocket.close(code=1008, reason="Invalid exam ID")
-        return
-
-    token = websocket.headers.get("Authorization", "").split(" ")[-1]
     try:
-        subject = jwt_decode(token, key=JWT_SECRET_KEY, algorithms=[ALGORITHM])
-        user_id = subject.get("sub")
-        if not user_id:
-            raise ValueError("Missing sub")
-    except (PyJWTError, ValueError):
-        await websocket.close(code=1008, reason="Invalid token")
-        return
+        req_json = await request.json()
+        exam = Exam(**req_json)
+        exam_dal = await get_exam_dal()
+        await exam_dal.create_exam(exam)
+        return {"message": "Exam created successfully"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-    grading_process_key = f"{user_id}:{exam_id}"
-
-    stream_manager = StreamManager()
-    await stream_manager.connect()
-    await conn_manager.connect(websocket, user_id)
-
+@exam_router.post("/{exam_id}/questions")
+async def submit_paper(request: Request):
     try:
-        last_msg = await stream_manager.get_last_message(grading_process_key)
-        if last_msg and "answer_id" in last_msg:
-            answers_cursor = await websocket.app.database["Answers"].find_one(
-                {"_id": ObjectId(last_msg["answer_id"])}
-            )
-            if answers_cursor:
-                total_marks = sum(a.get("marks", 0) for a in answers_cursor.get("answers", []))
-                await conn_manager.send_personal_message(
-                    {"file_name": answers_cursor["file_name"], "total_marks": total_marks},
-                    user_id,
-                )
+        body = await request.json()
+        exam_id = request.path_params.get("exam_id")
+        file_base_64 = body.get("file_base_64");
+        filename = body.get("filename");
+        file_b64_bytes = base64.b64decode(file_base_64)
+        file_stream = BytesIO(file_b64_bytes)
+        await extract_and_save_questions(file_stream = file_stream, filename = filename, exam_id = exam_id)
+        return {"message": "Exam questions"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-        last_id = "$"
+@exam_router.post("/{exam_id}/answers")
+async def submit_answers(request: Request):
+    try:
+        body = await request.json()
+        exam_id = UUID(request.path_params.get("exam_id"))
+        filenames = body.get("filenames")
+        files_base_64 = body.get("files_base_64")
 
-        while True:
-            try:
-                messages = await stream_manager.redis.xread(
-                    {grading_process_key: last_id}, block=5000, count=1
-                )
-                if not messages:
-                    continue
+        if not files_base_64 or not filenames or len(filenames) != len(files_base_64):
+            raise HTTPException(status_code=400, detail="Invalid files payload")
 
-                for _, msgs in messages:
-                    for msg_id, fields in msgs:
-                        answers_info_list = websocket.app.database["Answers"].find(
-                            {"user_id": ObjectId(user_id), "exam_id": ObjectId(exam_id)}
-                        )
-                        answers_info_list = await answers_info_list.to_list(length=None)
+        student_dal = await get_student_dal()
+        student_ids = []
 
-                        if not answers_info_list:
-                            await conn_manager.send_personal_message(
-                                {"message": "No answers found for grading"}, user_id
-                            )
-                            continue
+        for i in range(len(files_base_64)):
+            file_b64_bytes = base64.b64decode(files_base_64[i])
+            file_stream = BytesIO(file_b64_bytes)
 
-                        data = []
-                        for answer_info in answers_info_list:
-                            total_marks = sum(a.get("marks", 0) for a in answer_info.get("answers", []))
-                            data.append(
-                                {"file_name": answer_info["file_name"], "total_marks": total_marks}
-                            )
+            student = await student_dal.create_student(exam_id=exam_id, marks=None)
+            student_ids.append(student.id)
 
-                        await conn_manager.send_personal_message({"update": data}, user_id)
-                        last_id = msg_id
-            except Exception as inner_e:
-                print(f"Error while processing stream message: {inner_e}")
-                await asyncio.sleep(1)
+            await extract_and_save_answers(file_streams=[file_stream], filenames=[filenames[i]], exam_id=exam_id, user_id=student.id)
 
-    except WebSocketDisconnect:
-        await conn_manager.disconnect(user_id)
-        await websocket.close(code=1000, reason="WebSocket connection cancelled")
-    except asyncio.CancelledError:
-        await websocket.close(code=1000, reason="WebSocket connection cancelled")
-        print(f"WebSocket connection for user {user_id} cancelled.")
-    finally:
-        await stream_manager.close()
-        print(f"WebSocket connection for user {user_id} closed.")
+        grading_info = GradingInfo(exam_id=exam_id, student_ids=student_ids, priority=0)
+        await grading_task_router.broker.publish(grading_info)
 
+        # Return stringified student IDs
+        return {"message": "Answers submitted successfully", "student_ids": [str(sid) for sid in student_ids]}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
-@exam_router.get("/exam/{exam_id}/student/{file_name}")
-async def get_test_results(request: Request, exam_id: str, file_name: str, user=Depends(get_current_user)):
-    answers_cursor = await request.app.database["Answers"].find_one({
-        "user_id": ObjectId(user["_id"]),
-        "exam_id": ObjectId(exam_id),
-        "file_name": file_name
-    })
-    questions_cursors = await request.app.database["Questions"].find_one({
-        "user_id": ObjectId(user["_id"]),
-        "_id": ObjectId(exam_id)
+@exam_router.post("/{exam_id}/rubrics")
+async def submit_rubrics(request: Request):
+    try:
+        body = await request.json()
+        user_id = request.headers.get("X-User-Id")
+        exam_id = request.path_params.get("exam_id")
+        rubric_file_base_64 = body.get("rubric_file_base_64")
+        filename = body.get("filename")
+        rubric_file_stream = BytesIO(base64.b64decode(rubric_file_base_64))
+        await extract_and_save_rubric(file_stream=rubric_file_stream, filename=filename, exam_id=exam_id, user_id=user_id)
+        return {"message": "Rubric submitted successfully"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+@exam_router.post("/{exam_id}/reference")
+async def post_reference(request: Request):
+    try:
+        exam_id = request.path_params.get("exam_id")
+        body = await request.json()
+        reference_file_base_64 = body.get("reference_file_base_64")
+        reference_filename = body.get("reference_filename")
+        reference_file_stream = BytesIO(base64.b64decode(reference_file_base_64))
+        await process_rag_material(file_stream=reference_file_stream, filename=reference_filename, exam_id=exam_id)
+        return {"message": "Reference submitted successfully"}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
 
+@exam_router.get("/{exam_id}/students")
+async def get_students(request: Request, graded: Optional[bool] = None):
+    try:
+        exam_id = request.path_params.get("exam_id")
+        students_dal = await get_student_dal()
+        students = await students_dal.get_students(exam_id=UUID(exam_id))
+        if graded is None:
+            return students
+        graded_students = []
+        ungraded_students = []
+        for student in students:
+            if student.marks is None:
+                ungraded_students.append(student)
+            else:
+                graded_students.append(student)
+        if graded:
+            return graded_students
+        else:
+            return ungraded_students
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
+@exam_router.get("/{exam_id}/students/{student_id}")
+async def get_test_results(request: Request):
+    try:
+        exam_id = request.path_params.get("exam_id")
+        student_id = request.path_params.get("student_id")
+        student_dal = await get_student_dal()
+        student = await student_dal.get_student(student_id=UUID(student_id))
 
-    })
-    if not questions_cursors:
-        request.status_code=404
-        return {"message": "No questions found for the specified exam"}
+        if not student:
+            raise HTTPException(status_code=404, detail="Student not found")
 
-    if not answers_cursor:
-        request.status_code=404
-        return {"message": "No answers found for the specified exam and file name"}
+        answers_dal = await get_answers_dal()
+        answers = await answers_dal.get_answers(exam_id=UUID(exam_id), student_id=UUID(student_id))
 
-    total_marks = 0
-    for answer in answers_cursor.get("answers", []):
-        total_marks += answer.get("marks", 0)
+        question_dal = await get_question_dal()
+        questions = await question_dal.get_questions(exam_id=UUID(exam_id))
+        question_map = {q.id: q for q in questions}
 
-    return {
-        "file_name": answers_cursor["file_name"],
-        "total_marks": total_marks,
-        "questions": questions_cursors.get("questions", []),
-        "answers": answers_cursor.get("answers", [])
-    }
+        results = []
+        for ans in answers:
+            q = question_map.get(ans.question_id)
+            if q:
+                results.append({
+                    "question_id": str(q.id),
+                    "question_number": q.question_number,
+                    "question_text": q.text,
+                    "topic": q.topic,
+                    "max_marks": q.max_marks,
+                    "student_answer": ans.answer,
+                    "awarded_marks": ans.marks
+                })
 
-@exam_router.get("/exam")
-async def get_exam_list(
-    request: Request,
-    user=Depends(get_current_user),
-):
-    exams = await request.app.database["Questions"].find(
-        {"user_id": ObjectId(user["_id"])}
-    ).to_list(length=None)
-    returned_exams = []
-    for exam in exams:
-        e = {
-            "id": str(exam["_id"]),
-            "exam_name": exam["exam_name"],
+        return {
+            "student_id": str(student.id),
+            "total_marks": student.marks,
+            "results": results
         }
-        returned_exams.append(e)
-    return {"exams": returned_exams}
+    except HTTPException as e:
+        raise e
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
