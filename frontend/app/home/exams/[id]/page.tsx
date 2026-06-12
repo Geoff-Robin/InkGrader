@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { useExamUpdates } from "@/hooks/useExamUpdates";
 
 interface Student {
     id: string;
@@ -44,6 +45,8 @@ export default function ExamDetailsPage() {
 
     const { data: session } = authClient.useSession();
     const userId = session?.user?.id;
+
+    useExamUpdates(id);
 
     const { data: students = [], isLoading: loading, error } = useQuery<Student[]>({
         queryKey: ["exam-students", id, userId, showGraded],
