@@ -11,7 +11,7 @@
   - **Extraction Agent**: Seamlessly parses raw OCR text into structured question/answer formats.
   - **Grading Agent**: Evaluates student responses based on context, accuracy, and provided reference materials.
 - **📚 RAG-Enhanced Evaluation**: Powered by PostgreSQL `pgvector`, the system cross-references student answers with official marking schemes for highly accurate grading.
-- **⚡ Background Processing**: Leverages FastStream and Redis to handle grading tasks asynchronously in the background.
+- **⚡ Background Processing**: Uses Redis as a job queue and pub/sub channel to handle grading tasks asynchronously and push live updates to the frontend.
 - **📊 Modern Dashboard**: A premium Next.js 16 App Router dashboard for managing exams, uploading student work, and viewing detailed feedback.
 - **🔐 Enterprise-Grade Auth**: Secure authentication flow utilizing **Better Auth** with Drizzle ORM and PostgreSQL.
 
@@ -25,7 +25,7 @@
 - **AI/LLM**: [Groq API](https://wow.groq.com/), Hugging Face Inference API for embeddings
 - **Vector Search**: PostgreSQL `pgvector` extension
 - **Database ORM**: SQLAlchemy 2.0
-- **Background Tasks**: FastStream with Redis
+- **Background Tasks**: Redis (job queue + pub/sub)
 - **OCR**: OCR.Space API / Pypdf
 
 ### Frontend (Next.js/React)
@@ -130,7 +130,7 @@ BACKEND_URL=http://127.0.0.1:8000/
   - `Agents/`: The "brains"—Extraction and Grading agents.
   - `Database/`: SQLAlchemy models and Data Access Layers (DALs).
   - `FileProcessor/`: OCR and document parsing utilities.
-  - `Grading/`: FastStream background tasks for evaluating student answers.
+  - `Grading/`: Redis-backed background tasks for evaluating student answers.
 - `frontend/`: Next.js 16 App Router interface and Better Auth integration.
   - `app/`: Next.js routes and layouts.
   - `components/`: Reusable UI components powered by shadcn/ui.
