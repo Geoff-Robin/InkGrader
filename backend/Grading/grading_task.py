@@ -1,42 +1,30 @@
 import os
 import asyncio
 import logging
-import requests
+import uuid
 
 from Agents.grading_agent import GradingAgent
 from Database.config import async_session
 from Database.questions_dal import QuestionDAL
 from Database.answers_dal import AnswersDAL
 from Database.student_dal import StudentDAL
+from Database.locks import student_grading_lock
 from Grading.models import GradingInfo
-from faststream.redis.fastapi import RedisRouter
+from Grading.queue import publish_grading_update
 
 logger = logging.getLogger(__name__)
 
-if os.environ.get("REDIS_URL"):
-    grading_task_router = RedisRouter(os.environ["REDIS_URL"])
-else:
-    grading_task_router = RedisRouter("redis://localhost:6379")
+async def grade_student(exam_id: uuid.UUID, student_id: uuid.UUID, question_map: dict, agent: GradingAgent):
+    async with student_grading_lock(student_id) as acquired:
+        if not acquired:
+            logger.info(f"Student {student_id} already being graded by another worker, skipping.")
+            return
 
-@grading_task_router.subscriber(list="grading_task_queue")
-async def grading_task(grading_info: GradingInfo):
-    exam_id = grading_info.exam_id
-    student_ids = grading_info.student_ids
-    logger.info(f"Started grading task for exam_id: {exam_id} with {len(student_ids)} students.")
-    frontend_url = os.environ.get("FRONTEND_URL", "http://host.docker.internal:3000")
-    webhook_url = f"{frontend_url}/api/webhook/results"
-    async with async_session() as session:
-        question_dal = QuestionDAL(session)
-        answers_dal = AnswersDAL(session)
-        student_dal = StudentDAL(session)
+        logger.info(f"Processing student: {student_id}")
+        async with async_session() as session:
+            answers_dal = AnswersDAL(session)
+            student_dal = StudentDAL(session)
 
-        questions = await question_dal.get_questions(exam_id)
-        question_map = {q.id: q for q in questions}
-
-        agent = GradingAgent(api_key=os.environ.get("GROQ_API_KEY"), exam_id=exam_id)
-
-        for student_id in student_ids:
-            logger.info(f"Processing student: {student_id}")
             answers = await answers_dal.get_answers(exam_id, student_id)
             answers_to_update = []
             total_marks = 0
@@ -81,14 +69,32 @@ async def grading_task(grading_info: GradingInfo):
             else:
                 logger.warning(f"No valid answers graded for student {student_id}.")
 
-            payload = {
-                "exam_id": str(exam_id),
-                "student_id": str(student_id),
-                "message": f"Job has been finished for student {student_id} and exam {exam_id}"
-            }
+        payload = {
+            "exam_id": str(exam_id),
+            "student_id": str(student_id),
+            "message": f"Job has been finished for student {student_id} and exam {exam_id}"
+        }
 
-            try:
-                await asyncio.to_thread(requests.post, webhook_url, json=payload, timeout=10)
-                logger.info(f"Successfully submitted grading result for student {student_id} to {webhook_url}")
-            except Exception as e:
-                logger.error(f"Failed to submit result for student {student_id} to webhook: {e}")
+        try:
+            await publish_grading_update(payload)
+            logger.info(f"Published grading update for student {student_id} on exam {exam_id}.")
+        except Exception as e:
+            logger.error(f"Failed to publish grading update for student {student_id}: {e}")
+
+
+async def process_grading_job(grading_info: GradingInfo):
+    exam_id = grading_info.exam_id
+    student_ids = grading_info.student_ids
+    logger.info(f"Started grading task for exam_id: {exam_id} with {len(student_ids)} students.")
+
+    async with async_session() as session:
+        question_dal = QuestionDAL(session)
+        questions = await question_dal.get_questions(exam_id)
+    question_map = {q.id: q for q in questions}
+
+    agent = GradingAgent(api_key=os.environ.get("GROQ_API_KEY"), exam_id=exam_id)
+
+    await asyncio.gather(
+        *(grade_student(exam_id, student_id, question_map, agent) for student_id in student_ids),
+        return_exceptions=True,
+    )
