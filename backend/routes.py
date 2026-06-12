@@ -6,7 +6,7 @@ from fastapi import (
 import base64
 from Database.config import async_session
 from Database.student_dal import StudentDAL
-from Grading import grading_task_router, GradingInfo
+from Grading import enqueue_grading_job, GradingInfo
 from FileProcessor.utils import extract_and_save_questions, extract_and_save_answers, extract_and_save_rubric, process_rag_material
 from fastapi.exceptions import HTTPException
 from uuid import UUID
@@ -122,7 +122,7 @@ async def submit_answers(request: Request, background_tasks: BackgroundTasks):
             import asyncio
             await asyncio.gather(*extraction_tasks)
             grading_info = GradingInfo(exam_id=exam_id, student_ids=student_ids, priority=0)
-            await grading_task_router.broker.publish(grading_info, list="grading_task_queue")
+            await enqueue_grading_job(grading_info)
 
         background_tasks.add_task(process_answers_in_bg)
 

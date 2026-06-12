@@ -21,7 +21,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 from Database.config import get_engine
 from Database.models import Base
-from Grading import grading_task_router
+from Grading import run_grading_worker
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -29,13 +29,14 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector"))
         await conn.run_sync(Base.metadata.create_all)
+    worker_task = asyncio.create_task(run_grading_worker())
     yield
+    worker_task.cancel()
     await engine.dispose()
 
 app = FastAPI(lifespan=lifespan, debug=True)
 
 app.include_router(exam_router, prefix="/api/exam")
-app.include_router(grading_task_router)
 
 @app.get("/api/health")
 async def check_health():
