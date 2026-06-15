@@ -12,8 +12,17 @@ def mock_groq():
     with patch("Agents.grading_agent.AsyncGroq") as mock:
         yield mock
 
+@pytest.fixture(autouse=True)
+def mock_rag():
+    with patch(
+        "Agents.grading_agent.rag_tool",
+        new_callable=AsyncMock,
+        return_value="The reference answer is 4.",
+    ) as mock:
+        yield mock
+
 @pytest.mark.asyncio
-async def test_grading_agent_success(mock_groq):
+async def test_grading_agent_success(mock_groq, mock_rag):
     # Setup mock
     mock_client = MagicMock()
     mock_response = MagicMock()
@@ -42,7 +51,28 @@ async def test_grading_agent_success(mock_groq):
     call_kwargs = mock_client.chat.completions.create.call_args.kwargs
     assert call_kwargs["model"] == "openai/gpt-oss-120b"
     assert call_kwargs["messages"][0]["content"] == GRADING_AGENT_PROMPT.format(max_marks=5)
-    assert call_kwargs["messages"][1]["content"] == query
+    assert query in call_kwargs["messages"][1]["content"]
+    assert "The reference answer is 4." in call_kwargs["messages"][1]["content"]
+    mock_rag.assert_awaited_once_with(query, exam_id)
+
+@pytest.mark.asyncio
+async def test_grading_agent_continues_when_rag_fails(mock_groq, mock_rag):
+    mock_rag.side_effect = RuntimeError("embedding service unavailable")
+
+    mock_client = MagicMock()
+    mock_response = MagicMock()
+    mock_message = MagicMock(content=json.dumps({"question_id": 1, "marks": 3}))
+    mock_response.choices = [MagicMock(message=mock_message)]
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
+    mock_groq.return_value = mock_client
+
+    agent = GradingAgent(api_key="fake_key", exam_id=uuid.uuid4())
+    result = await agent.grade(query="Question and answer", max_marks=5)
+
+    assert result is not None
+    assert result.marks == 3
+    call_kwargs = mock_client.chat.completions.create.call_args.kwargs
+    assert call_kwargs["messages"][1]["content"] == "Question and answer"
 
 @pytest.mark.asyncio
 async def test_grading_agent_invalid_json(mock_groq):

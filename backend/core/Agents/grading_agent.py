@@ -9,6 +9,7 @@ from pydantic import ValidationError
 
 from Agents.prompts import GRADING_AGENT_PROMPT
 from Agents.models import GradingAgentOutput
+from Agents.tools import rag_tool
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -27,6 +28,26 @@ class GradingAgent:
 
     async def grade(self, query: str, max_marks: int) -> Optional[GradingAgentOutput]:
         try:
+            user_content = query
+            try:
+                reference_context = await rag_tool(query, self.exam_id)
+                if reference_context:
+                    user_content = (
+                        f"{query}\n\n"
+                        "Retrieved reference context:\n"
+                        "<reference_context>\n"
+                        f"{reference_context}\n"
+                        "</reference_context>"
+                    )
+            except Exception:
+                # A missing reference or temporary embedding failure should not
+                # prevent rubric-based grading from completing.
+                logger.warning(
+                    "RAG retrieval failed for exam %s; grading without reference context",
+                    self.exam_id,
+                    exc_info=True,
+                )
+
             response = await self.groq.chat.completions.create(
                 model="openai/gpt-oss-120b",
                 messages=[
@@ -36,7 +57,7 @@ class GradingAgent:
                     },
                     {
                         "role": "user",
-                        "content": query,
+                        "content": user_content,
                     }
                 ],
                 response_format={
