@@ -32,7 +32,7 @@ async def test_grade_student_returns_true_when_marks_persisted(db_session):
     student = await student_dal.create_student(exam_id=exam.id, marks=None)
 
     answers_dal = AnswersDAL(db_session)
-    answer = Answers(student_id=student.id, question_id=question.id, answer="4")
+    answer = Answers(exam_id=exam.id, student_id=student.id, question_id=question.id, answer="4")
     await answers_dal.add_answers([answer])
 
     agent = AsyncMock()
