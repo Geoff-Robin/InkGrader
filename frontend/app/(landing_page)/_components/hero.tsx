@@ -1,61 +1,77 @@
-import React from "react";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, PlayCircle } from "lucide-react";
+import { ArrowRight, Check } from "lucide-react";
+import Link from "next/link";
+
+const steps = [
+  {
+    number: "01",
+    title: "Create an exam",
+    description: "Add your questions, answer key, and grading rubric.",
+  },
+  {
+    number: "02",
+    title: "Upload student work",
+    description: "Submit handwritten scans or typed responses in one batch.",
+  },
+  {
+    number: "03",
+    title: "Review the results",
+    description: "Check scores and feedback before sharing them with students.",
+  },
+];
 
 export function HeroSection() {
   return (
-    <div className="relative pt-32 pb-20 md:pt-48 md:pb-32 overflow-hidden">
-      {/* Background Decor */}
-      <div className="absolute inset-0 bg-grid-black/[0.02] dark:bg-grid-white/[0.02] -z-10" />
-      <div className="absolute inset-0 bg-linear-to-t from-background via-transparent to-transparent -z-10" />
+    <section className="h-full overflow-hidden">
+      <div className="mx-auto grid h-full w-full max-w-6xl items-center gap-4 px-5 py-4 sm:gap-8 sm:px-8 sm:py-6 md:grid-cols-[0.9fr_1.1fr] md:gap-14 md:py-10 lg:gap-20">
+        <div className="max-w-xl">
+          <p className="mb-3 text-sm font-medium text-muted-foreground">InkGrader</p>
+          <h1 className="max-w-lg text-3xl font-semibold leading-[1.08] tracking-[-0.04em] text-foreground sm:text-5xl lg:text-6xl">
+            Thoughtful grading, without the busywork.
+          </h1>
+          <p className="mt-4 max-w-lg text-base leading-7 text-muted-foreground sm:mt-5 sm:text-lg">
+            Turn student responses into consistent scores and useful feedback,
+            guided by the questions, answers, and rubric you provide.
+          </p>
 
-      <div className="container mx-auto px-4 text-center">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-primary/5 border border-primary/10 text-primary mb-8 animate-fade-in">
-          <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
-          </span>
-          <span className="text-sm font-medium">New: AI Grading v2.0 is live</span>
-        </div>
-
-        <h1 className="text-4xl md:text-6xl lg:text-7xl font-extrabold tracking-tight mb-6 bg-clip-text text-transparent bg-linear-to-b from-foreground to-foreground/70">
-          The Future of <span className="text-primary italic">Grading</span> <br className="hidden md:block" />
-          is Here.
-        </h1>
-
-        <p className="max-w-2xl mx-auto text-lg md:text-xl text-muted-foreground mb-10 leading-relaxed font-medium">
-          Automate classroom assessments with unmatched precision. Save hundreds of hours
-          on manual grading while providing personalized feedback to every student.
-        </p>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-          <Button size="lg" className="h-12 px-8 text-base font-semibold group">
-            Get Started for Free
-            <ArrowRight className="ml-2 h-4 w-4 transition-transform group-hover:translate-x-1" />
-          </Button>
-          <Button size="lg" variant="outline" className="h-12 px-8 text-base font-semibold transition-all hover:bg-muted/50">
-            <PlayCircle className="mr-2 h-5 w-5" />
-            Watch Demo
-          </Button>
-        </div>
-
-        <div className="mt-20 relative max-w-5xl mx-auto">
-          <div className="absolute -inset-1 bg-linear-to-r from-primary to-cyan-500 rounded-[2rem] blur opacity-20 -z-10" />
-          <div className="rounded-[1.5rem] border border-white/10 overflow-hidden shadow-2xl bg-card">
-            <div className="h-12 border-b border-border bg-muted/30 flex items-center px-4 gap-2">
-              <div className="flex gap-1.5">
-                <div className="w-3 h-3 rounded-full bg-red-500/20 border border-red-500/30" />
-                <div className="w-3 h-3 rounded-full bg-yellow-500/20 border border-yellow-500/30" />
-                <div className="w-3 h-3 rounded-full bg-green-500/20 border border-green-500/30" />
-              </div>
-              <div className="mx-auto text-xs text-muted-foreground font-mono">dashboard.inkgrader.ai</div>
-            </div>
-            <div className="aspect-video bg-muted/5 animate-pulse flex items-center justify-center">
-              <p className="text-muted-foreground font-mono text-sm">Dashboard Preview...</p>
+          <div className="mt-6 flex items-center gap-4 sm:mt-8">
+            <Button asChild size="lg" className="group">
+              <Link href="/signup">
+                Start grading
+                <ArrowRight className="ml-1 h-4 w-4 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </Button>
+            <div className="hidden items-center gap-2 text-sm text-muted-foreground sm:flex">
+              <Check className="h-4 w-4" />
+              Review every result
             </div>
           </div>
         </div>
+
+        <div className="border-y border-border md:border md:bg-card">
+          <div className="border-b border-border py-2.5 md:px-7 md:py-5">
+            <p className="text-sm font-semibold">How it works</p>
+          </div>
+          <div className="divide-y divide-border">
+            {steps.map((step) => (
+              <div
+                key={step.number}
+                className="grid grid-cols-[2.5rem_1fr] gap-2 py-2.5 md:grid-cols-[3rem_1fr] md:px-7 md:py-5"
+              >
+                <span className="pt-0.5 text-xs font-medium tabular-nums text-muted-foreground">
+                  {step.number}
+                </span>
+                <div>
+                  <h2 className="text-sm font-semibold sm:text-base">{step.title}</h2>
+                  <p className="mt-1 text-sm leading-5 text-muted-foreground sm:leading-6">
+                    {step.description}
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
-    </div>
+    </section>
   );
 }

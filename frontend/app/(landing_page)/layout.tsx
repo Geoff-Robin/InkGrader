@@ -1,7 +1,5 @@
 "use client";
 import NavBar from "./_components/NavBar";
-import Footer from "./_components/Footer";
-import { Boxes } from "@/components/ui/background-boxes";
 
 export default function LandingPageLayout({
   children,
@@ -9,16 +7,9 @@ export default function LandingPageLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex flex-col bg-white dark:bg-slate-900">
-      {/* Container for everything ABOVE the footer */}
+    <div className="flex h-dvh flex-col overflow-hidden bg-background">
       <NavBar />
-      <div className="relative w-full min-h-screen overflow-hidden flex flex-col">
-        <Boxes />
-        <main className="relative z-10 pt-32 grow flex flex-col">
-          {children}
-        </main>
-      </div>
-      <Footer />
+      <main className="min-h-0 flex-1">{children}</main>
     </div>
   );
 }
