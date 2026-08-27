@@ -31,6 +31,18 @@ Subpackages:
 
 `routes.py` submission → OCR + `ExtractionAgent` → `Answers` rows → enqueue `GradingInfo` on Redis → `grading_task.py` worker grades concurrently per student → `Answers`/`Student` marks persisted → publish to `grading_updates` → `gateway.py` relays over WS → `useExamUpdates.ts` invalidates the *whole* `exam-students` query for the exam (not scoped per-student — be aware this can cause redundant refetches when many students finish close together).
 
+## Keep the CocoIndex search index in sync
+
+- After any code change (add, modify, rename, delete), run `ccc index` before running another `ccc search`.
+- Index immediately after each change — don't batch several edits and index once at the end.
+- If `ccc search` results look stale or miss a recent change, run `ccc index` and retry the search.
+
+## When to use `ccc search` vs grep
+
+- Use `ccc search` for open-ended or semantic questions — "where do we handle auth token refresh," "what validates user input before it hits the DB," "how is retry logic implemented" — anything where you don't know the exact string/pattern to grep for, or where the answer could be phrased many different ways across the codebase.
+- Use grep/regex only when you already know the exact literal, symbol name, or pattern to match (e.g. a specific function name, import path, or error string).
+- Default to `ccc search` first when exploring unfamiliar code or answering "how/where does X work" questions — fall back to grep only once you've narrowed down specific identifiers to chase.
+
 ## Plan mode: plans must be structured as TDD cycles
 
 When producing a plan (plan mode) for any change to `backend/`, structure it as a sequence of **Red → Green → Refactor** cycles, not as a flat list of implementation steps. Each cycle in the plan must name:
