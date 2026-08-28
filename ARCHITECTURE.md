@@ -2,6 +2,16 @@
 
 AI-powered grading of handwritten exam submissions: OCR extraction + LLM scoring, queued through Postgres and graded by a replicated worker pool, pushed live to the frontend over WebSocket via Redis pub/sub.
 
+## Frontend ↔ backend connection architecture
+
+The frontend never talks to the backend's Postgres/Redis directly — it only ever calls two backend HTTP/WS surfaces, both through Next.js server-side proxy routes so backend URLs/credentials stay off the browser:
+
+- **HTTP (CRUD, uploads, reads)**: browser → Next.js server route under `app/api/proxy/exam/...` → `POST/GET` on `api/app.py` (`api/routes.py`), port 8000. Covers exam creation, question/rubric/answer/reference uploads, exam and student reads.
+- **WebSocket (live grading updates)**: browser opens `/ws/exam/{exam_id}` directly against the gateway process (`backend/gateway/gateway.py`, port 8001) via `hooks/useExamUpdates.ts` (client-only). The gateway has no HTTP API of its own and no dependency on `core` — it exists purely to fan grading-completion events (relayed from Redis pub/sub) out to connected browsers, decoupled from the API's HTTP/extraction workload.
+- **Auth**: handled separately, in Next.js itself — `app/api/auth/[...all]` (Better Auth) against its own Drizzle-managed tables, unrelated to the backend's SQLAlchemy/Postgres grading schema.
+
+So there are two independent frontend-to-backend links (HTTP to `api`, WebSocket to `gateway`) rather than one, and the frontend never sees the Postgres job queue or Redis channel that connect `api`/`worker`/`gateway` to each other — see the flowchart below.
+
 ## Components
 
 Four deployables, one shared library:
@@ -89,7 +99,7 @@ KnowledgeBase table (pgvector)")]
 `backend/` is a `uv` workspace (`[tool.uv.workspace]` in `backend/pyproject.toml`, one shared `uv.lock`) with four members, each its own `pyproject.toml` + `Dockerfile`:
 
 - `core/` (`inkgrader-core`) — shared business logic, imported by `api` and `worker` as a workspace path dependency:
-  - `Agents/` — Groq LLM wrappers (`extraction_agent.py`, `grading_agent.py`), prompt/schema definitions (`prompts.py`, `models.py`). `tools.py` defines `rag_tool()` (pgvector similarity search) — not wired into any Groq call.
+  - `Agents/` — Groq LLM wrappers (`extraction_agent.py`, `grading_agent.py`), prompt/schema definitions (`prompts.py`, `models.py`). `tools.py` defines `rag_tool()` (pgvector similarity search) — wired into `GradingAgent.grade()`'s Groq call for retrieval-augmented grading.
   - `FileProcessor/` — PDF/image parsing and OCR.Space integration.
   - `Grading/` — `queue.py` (Postgres `grading_jobs` table job queue: `SELECT ... FOR UPDATE SKIP LOCKED` claim + Redis pub/sub publish), `grading_task.py` (per-student grading orchestration).
   - `Database/` — SQLAlchemy 2.0 models (including `GradingJob`) + one DAL per model, plus `locks.py` (Postgres advisory lock) and `grading_job_dal.py` (claim/mark-status queries).
