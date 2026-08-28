@@ -119,7 +119,7 @@ async def test_answers_dal(db_session):
     await question_dal.add_question(q1)
 
     answers_dal = AnswersDAL(db_session)
-    ans1 = Answers(student_id=student.id, question_id=q1.id, answer="4")
+    ans1 = Answers(exam_id=exam.id, student_id=student.id, question_id=q1.id, answer="4")
 
     await answers_dal.add_answers([ans1])
 

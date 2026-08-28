@@ -9,7 +9,7 @@ from Agents.prompts import GRADING_AGENT_PROMPT
 
 @pytest.fixture
 def mock_groq():
-    with patch("Agents.grading_agent.Groq") as mock:
+    with patch("Agents.grading_agent.AsyncGroq") as mock:
         yield mock
 
 @pytest.mark.asyncio
@@ -22,7 +22,7 @@ async def test_grading_agent_success(mock_groq):
     expected_output = {"question_id": 1, "marks": 4}
     mock_message.content = json.dumps(expected_output)
     mock_response.choices = [MagicMock(message=mock_message)]
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
     mock_groq.return_value = mock_client
 
     # Execute
@@ -52,7 +52,7 @@ async def test_grading_agent_invalid_json(mock_groq):
 
     mock_message.content = "{ invalid json"
     mock_response.choices = [MagicMock(message=mock_message)]
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
     mock_groq.return_value = mock_client
 
     exam_id = uuid.uuid4()
@@ -70,7 +70,7 @@ async def test_grading_agent_validation_error(mock_groq):
     # Missing required 'marks' field
     mock_message.content = json.dumps({"question_id": 1})
     mock_response.choices = [MagicMock(message=mock_message)]
-    mock_client.chat.completions.create.return_value = mock_response
+    mock_client.chat.completions.create = AsyncMock(return_value=mock_response)
     mock_groq.return_value = mock_client
 
     exam_id = uuid.uuid4()
