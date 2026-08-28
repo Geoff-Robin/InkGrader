@@ -42,16 +42,43 @@ AI-powered grading system for handwritten exam submissions. OCR extraction + LLM
 - Use grep/regex only when you already know the exact literal, symbol name, or pattern to match (e.g. a specific function name, import path, or error string).
 - Default to `ccc search` first when exploring unfamiliar code or answering "how/where does X work" questions — fall back to grep only once you've narrowed down specific identifiers to chase.
 
-## Plan mode: plans must be structured as TDD cycles
+## Plan Mode: Technical Design Document Format
 
-When producing a plan (plan mode) for any change to `backend/`, structure it as a sequence of **Red → Green → Refactor** cycles, not as a flat list of implementation steps. Each cycle in the plan must name:
+When entering plan mode, do not produce a simple task checklist. Structure the plan as a Technical Design Document (TDD) with the following sections:
 
-1. **Red** — the exact test file (existing under `backend/core/tests/`, or a new one) and the exact test case(s)/assertions to add, describing the behavior before any implementation exists. State that the test is expected to fail, and why (missing function, wrong output, etc.).
-2. **Green** — the minimal implementation change (exact files) needed to make that test pass. No extra scope beyond what the test requires.
-3. **Refactor** — any cleanup to do once green, only if needed, keeping the same tests passing. Skip this step in the plan if there's nothing to refactor — don't pad it.
+### 1. Overview
+- One-paragraph problem statement: what is being built/changed and why
+- Goals (what this plan solves)
+- Non-goals (explicitly out of scope, to prevent scope creep)
 
-Rules for applying this:
-- Break the overall change into the smallest set of independent cycles that make sense — one cycle per behavior, not one cycle for the entire feature.
-- Order cycles so each is runnable/testable on its own (`uv run --package inkgrader-core pytest` from `backend/core/`) before moving to the next.
-- For `frontend/` changes: no test runner exists yet. Plans touching frontend logic worth unit-testing should call this out explicitly and ask whether to (a) add a minimal test runner as its own first cycle, or (b) proceed without tests — don't silently skip the question.
-- Don't invent tests for trivial/typo-level changes or pure config/markup edits — TDD structure applies to behavior changes, not everything.
+### 2. Context
+- Current state of the relevant code/system
+- Relevant files, modules, and functions (use exact paths, e.g. `src/api/auth.ts`)
+- Constraints (existing conventions, dependencies, backward compatibility requirements)
+
+### 3. Proposed Design
+- High-level architecture / approach
+- Data flow or sequence of operations
+- Key abstractions, interfaces, or types being introduced or modified
+- API/schema/contract changes, if any
+
+### 3a. Data Model Changes
+*(Include only if the plan adds, modifies, or removes persisted data structures — DB schemas, ORM models, API payloads, config shapes, etc. Omit entirely if not applicable — do not include it as "N/A".)*
+
+- **Entities affected**: list tables/models/types being changed (e.g. `User`, `orders` table, `AuthConfig` interface)
+- **Schema diff**: old shape → new shape, field by field
+  - New fields (name, type, nullable/default)
+  - Removed fields (and what depends on them)
+  - Changed fields (type changes, renames, constraint changes)
+- **Migration strategy**:
+  - Is this a breaking change to existing data?
+  - Migration script needed? (up/down)
+  - Backfill required for existing records?
+  - Can this be deployed without downtime?
+- **Serialization/API impact**: does this change request/response shapes, GraphQL schema, or public types?
+- **Consumers affected**: list other modules/services that read or write this data and may need updates
+
+### 4. Alternatives Considered
+*(Include only if there was a genuine fork in approach worth recording — e.g. multiple viable architectures, a tradeoff between performance/simplicity/compatibility, or a non-obvious choice a reviewer would ask "why not X?" about. Omit entirely for small, mechanical, or single-obvious-approach changes — do not include it as "N/A" or pad it with a strawman.)*
+
+- The alternative approach(es)
