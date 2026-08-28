@@ -1,0 +1,16 @@
+[project]
+name = "inkgrader-api"
+version = "0.1.0"
+description = "InkGrader HTTP API: exam creation, submission, student/exam reads"
+requires-python = ">=3.12"
+dependencies = [
+    "fastapi[standard]==0.116.1",
+    "python-dotenv==1.1.1",
+    "inkgrader-core",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+inkgrader-core = { workspace = true }
