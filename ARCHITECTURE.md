@@ -30,9 +30,13 @@ claims via SELECT ... FOR UPDATE SKIP LOCKED
 Grading/grading_task.py: process_grading_job -> grade_student
 (Postgres advisory lock per student)"]
 
+    RagTool["rag_tool()
+Agents/tools.py
+pgvector similarity search"]
+
     Agent["GradingAgent
 Agents/grading_agent.py
-question + rubric + answer -> marks (Groq)"]
+question + rubric + answer + retrieved context -> marks (Groq)"]
 
     GW["Gateway — gateway/gateway.py :8001
 relays pub/sub to browser WS"]
@@ -41,13 +45,17 @@ relays pub/sub to browser WS"]
 pub/sub only: grading_updates"]
 
     DB[("PostgreSQL
-grading_jobs table (queue)")]
+grading_jobs table (queue)
+KnowledgeBase table (pgvector)")]
 
     FE -- HTTP --> Routes
     FE -- "WebSocket /ws/exam/{exam_id}" --> GW
 
     Routes -- "insert grading_jobs rows" --> DB
     Worker -- "claim batch (SKIP LOCKED)" --> DB
+    Worker --> RagTool
+    RagTool -- retrieved chunks --> Agent
+    RagTool -- query --> DB
     Worker --> Agent
     Worker -- publish grading_updates --> Redis
     Redis -- pub/sub --> GW
