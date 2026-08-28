@@ -86,3 +86,26 @@ class KnowledgeBase(Base):
     exam_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("exams.id"), nullable=False)
     content: Mapped[str] = mapped_column(String())
     vector: Mapped[list[float]] = mapped_column(Vector())
+
+
+class GradingJobStatus:
+    QUEUED = "queued"
+    PROCESSING = "processing"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class GradingJob(Base):
+    __tablename__ = "grading_jobs"
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+    exam_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("exams.id"), nullable=False)
+    student_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("students.id"), nullable=False)
+    priority: Mapped[int] = mapped_column(Integer(), nullable=False, default=0)
+    status: Mapped[str] = mapped_column(String(20), nullable=False, default=GradingJobStatus.QUEUED)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=lambda: datetime.now(timezone.utc),
+        onupdate=lambda: datetime.now(timezone.utc),
+    )

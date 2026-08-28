@@ -19,18 +19,14 @@ WORKDIR /app
 ENV UV_COMPILE_BYTECODE=1
 ENV UV_LINK_MODE=copy
 
-# Copy dependency files
+# Copy workspace manifest + lockfile first for better layer caching
 COPY pyproject.toml uv.lock ./
+COPY core ./core
+COPY api ./api
 
-# Install dependencies
-RUN uv sync --frozen --no-install-project --no-dev
-
-# Copy application files
-COPY . .
-
-# Install the project
-RUN uv sync --frozen --no-dev
+# Install only the api member (+ inkgrader-core, its shared dependency)
+RUN uv sync --frozen --package inkgrader-api --no-dev
 
 EXPOSE 8000
 
-CMD ["uv", "run", "fastapi", "run", "app.py", "--host", "0.0.0.0", "--port", "8000"]
+CMD ["uv", "run", "--package", "inkgrader-api", "fastapi", "run", "api/app.py", "--host", "0.0.0.0", "--port", "8000"]

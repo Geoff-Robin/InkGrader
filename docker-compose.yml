@@ -23,7 +23,9 @@ services:
       retries: 10
 
   backend:
-    build: ./backend
+    build:
+      context: ./backend
+      dockerfile: api/Dockerfile
     env_file: ./backend/.env.dev
     environment:
       REDIS_URL: redis://redis:6379
@@ -36,9 +38,28 @@ services:
       postgres:
         condition: service_healthy
 
+  grading-worker:
+    build:
+      context: ./backend
+      dockerfile: worker/Dockerfile
+    env_file: ./backend/.env.dev
+    environment:
+      REDIS_URL: redis://redis:6379
+      POSTGRES_URL: postgresql+psycopg://inkgrader:inkgrader@postgres:5432/inkgrader
+    depends_on:
+      backend:
+        condition: service_started
+      redis:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    deploy:
+      replicas: 3
+
   gateway:
-    build: ./backend
-    command: ["uv", "run", "fastapi", "run", "gateway.py", "--host", "0.0.0.0", "--port", "8001"]
+    build:
+      context: ./backend
+      dockerfile: gateway/Dockerfile
     env_file: ./backend/.env.dev
     environment:
       REDIS_URL: redis://redis:6379
