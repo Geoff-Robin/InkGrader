@@ -122,4 +122,48 @@ stateDiagram-v2
 
 ## RAG grading pipeline
 
-InkGrader uses RAG for grading: reference material uploaded at exam creation or via `/reference` gets chunked, embedded, and retrieved against during grading. See `core/Agents/tools.py`.
+**Ingestion (implemented and active):** an optional reference file, uploaded at exam creation (`POST /api/exam/`) or later (`POST /api/exam/{id}/reference`), is chunked and embedded, then stored in Postgres.
+
+**Chunking:** `process_rag_material()` (`core/FileProcessor/utils.py`) uses chonkie's `RecursiveChunker(chunk_size=1000)` — the tokenizer arg is left at its default (`"character"`), so `chunk_size` counts characters, not tokens. It's not a fixed-width splitter: `RecursiveChunker` splits text through an ordered list of separator levels, trying the coarsest first and only falling through to finer ones where a piece still exceeds `chunk_size`:
+1. paragraph breaks (`\n\n`, `\r\n`, `\n`, `\r`)
+2. sentence enders (`. `, `! `, `? `)
+3. punctuation/brackets (`{`, `}`, `,`, `;`, `-`, quotes, etc.)
+4. whitespace
+5. raw characters (last-resort fallback)
+
+Each resulting chunk (min 24 characters, chonkie's default floor) becomes one `KnowledgeBase` row, embedded with `sentence-transformers/all-MiniLM-L6-v2` via the HF Inference API.
+
+**Retrieval (implemented and connected to grading):** `core/Agents/tools.py` has `rag_tool()` / `retreive_similar_chunks()`, which embeds a query and does a pgvector cosine-distance lookup against `KnowledgeBase` for an exam. `GradingAgent.grade()` (`core/Agents/grading_agent.py`) uses the retrieved chunks alongside the question text, topic, rubric, and student answer, so grading is retrieval-augmented whenever a reference file has been uploaded for the exam.
+
+```mermaid
+flowchart TB
+    RefFile["Reference file upload\n(exam creation or /reference endpoint)"]
+    Chunk["chonkie RecursiveChunker\nprocess_rag_material()"]
+    Embed["HF InferenceClient\nsentence-transformers/all-MiniLM-L6-v2"]
+    KB[("KnowledgeBase table\n(pgvector)")]
+
+    QPaper["Question paper upload"]
+    ExtractQ["ExtractionAgent.extract_questions()"]
+    Questions[("Question rows")]
+
+    AnswerFile["Student answer upload"]
+    ExtractA["ExtractionAgent.extract_answers()\n(grouped against Questions)"]
+    Answers[("Answers rows")]
+
+    RagTool["rag_tool() / retreive_similar_chunks()"]
+
+    GradingAgentBox["GradingAgent.grade()\nquestion + rubric + answer + retrieved context -> marks"]
+    Result[("Answers.marks / Student.marks")]
+
+    RefFile --> Chunk --> Embed --> KB
+    QPaper --> ExtractQ --> Questions
+    AnswerFile --> ExtractA
+    Questions --> ExtractA --> Answers
+
+    KB -.feeds.-> RagTool
+    RagTool -.retrieves for.-> GradingAgentBox
+
+    Questions --> GradingAgentBox
+    Answers --> GradingAgentBox
+    GradingAgentBox --> Result
+```
