@@ -11,7 +11,7 @@
   - **Extraction Agent**: Seamlessly parses raw OCR text into structured question/answer formats.
   - **Grading Agent**: Evaluates student responses based on context, accuracy, and provided reference materials.
 - **📚 RAG-Enhanced Evaluation**: Powered by PostgreSQL `pgvector`, the system cross-references student answers with official marking schemes for highly accurate grading.
-- **⚡ Background Processing**: Grading jobs are queued in Postgres and claimed by a replicated worker pool; Redis pub/sub pushes live updates to the frontend.
+- **⚡ Background Processing**: Grading jobs are queued in Postgres and claimed by a replicated worker pool; results can be refreshed on demand from the frontend.
 - **📊 Modern Dashboard**: A premium Next.js 16 App Router dashboard for managing exams, uploading student work, and viewing detailed feedback.
 - **🔐 Enterprise-Grade Auth**: Secure authentication flow utilizing **Better Auth** with Drizzle ORM and PostgreSQL.
 
@@ -25,7 +25,7 @@
 - **AI/LLM**: [Groq API](https://wow.groq.com/), Hugging Face Inference API for embeddings
 - **Vector Search**: PostgreSQL `pgvector` extension
 - **Database ORM**: SQLAlchemy 2.0
-- **Background Tasks**: Postgres-backed job queue (`grading_jobs`, `SKIP LOCKED` claiming), Redis pub/sub for live updates
+- **Background Tasks**: Postgres-backed job queue (`grading_jobs`, `SKIP LOCKED` claiming)
 - **OCR**: OCR.Space API / Pypdf
 
 ### Frontend (Next.js/React)
@@ -44,15 +44,13 @@
 - Python 3.12+ (Using `uv` for dependency management)
 - Node.js 18+
 - PostgreSQL Database (with `pgvector` enabled)
-- Redis Instance
 - [Groq API Key](https://wow.groq.com/)
 - [Hugging Face API Key](https://huggingface.co/)
 - [OCR.Space API Key](https://ocr.space/ocrapi)
 
-*Tip: You can quickly spin up PostgreSQL with pgvector and Redis using Docker:*
+*Tip: You can quickly spin up PostgreSQL with pgvector using Docker:*
 ```bash
 docker run -d --name pgvector -e POSTGRES_PASSWORD=pass -p 5432:5432 pgvector/pgvector:pg16
-docker run -d --name redis -p 6379:6379 redis
 ```
 
 ### 1. Backend Setup
@@ -64,16 +62,15 @@ docker run -d --name redis -p 6379:6379 redis
    ```bash
    cp .env.example .env
    ```
-   *Fill in your API keys, database URL, and Redis URL in the `.env` file.*
-3. Install dependencies using `uv` (resolves the whole workspace — `core`, `api`, `worker`, `gateway` — into one shared environment):
+   *Fill in your API keys and database URL in the `.env` file.*
+3. Install dependencies using `uv` (resolves the whole workspace — `core`, `api`, and `worker` — into one shared environment):
    ```bash
    uv sync
    ```
-4. Start the three services (each in its own terminal):
+4. Start the two services (each in its own terminal):
    ```bash
    uv run --package inkgrader-api fastapi dev api/app.py       # HTTP API, port 8000
    uv run --package inkgrader-worker python worker/worker.py   # grading worker (run several for more throughput)
-   uv run --package inkgrader-gateway fastapi dev gateway/gateway.py  # WebSocket relay, port 8001
    ```
    `docker compose up` (see `docker-compose.yml` at the repo root) does this for you, including 3 grading-worker replicas.
 
@@ -107,7 +104,6 @@ docker run -d --name redis -p 6379:6379 redis
 ### Backend (`backend/.env`)
 ```env
 POSTGRES_URL=postgresql+psycopg://user:pass@localhost:5432/postgres
-REDIS_URL=redis://localhost:6379
 HF_API_KEY=YOUR_HUGGING_FACE_ACCESS_TOKEN
 GROQ_API_KEY=YOUR_GROQ_API_KEY
 OCR_API_KEY=YOUR_OCR_API_KEY
@@ -129,15 +125,14 @@ BACKEND_URL=http://127.0.0.1:8000/
 
 ## 📂 Project Structure
 
-- `backend/`: a `uv` workspace of 4 independently deployable services, sharing one lockfile.
+- `backend/`: a `uv` workspace containing shared core code and 2 independently deployable services, sharing one lockfile.
   - `core/`: shared business logic, not a process on its own.
     - `Agents/`: The "brains"—Extraction and Grading agents.
     - `Database/`: SQLAlchemy models and Data Access Layers (DALs).
     - `FileProcessor/`: OCR and document parsing utilities.
-    - `Grading/`: Postgres-backed job queue (`grading_jobs` table) + pub/sub publish for evaluating student answers.
+    - `Grading/`: Postgres-backed job queue (`grading_jobs` table) and student-answer evaluation.
   - `api/`: the HTTP API (`app.py`, `routes.py`).
   - `worker/`: the grading worker (`worker.py`), run at multiple replicas for throughput.
-  - `gateway/`: the WebSocket relay (`gateway.py`), forwards grading updates to the frontend.
 - `frontend/`: Next.js 16 App Router interface and Better Auth integration.
   - `app/`: Next.js routes and layouts.
   - `components/`: Reusable UI components powered by shadcn/ui.

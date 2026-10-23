@@ -11,7 +11,8 @@ import {
     AlertCircle,
     BookOpen,
     Upload,
-    CheckCircle
+    CheckCircle,
+    RefreshCw
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -21,7 +22,6 @@ import { Badge } from "@/components/ui/badge";
 import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { authClient } from "@/lib/auth-client";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { useExamUpdates } from "@/hooks/useExamUpdates";
 
 interface Student {
     id: string;
@@ -30,6 +30,18 @@ interface Student {
     score?: number;
     total_score?: number;
     submitted_at?: string;
+}
+
+interface StudentResponse {
+    id: string;
+    marks: number | null;
+}
+
+interface UploadRequestBody {
+    reference_file_base_64?: string;
+    reference_filename?: string;
+    filenames?: string[];
+    files_base_64?: string[];
 }
 
 export default function ExamDetailsPage() {
@@ -46,9 +58,13 @@ export default function ExamDetailsPage() {
     const { data: session } = authClient.useSession();
     const userId = session?.user?.id;
 
-    useExamUpdates(id);
-
-    const { data: students = [], isLoading: loading, error } = useQuery<Student[]>({
+    const {
+        data: students = [],
+        isLoading: loading,
+        isFetching,
+        error,
+        refetch,
+    } = useQuery<Student[]>({
         queryKey: ["exam-students", id, userId, showGraded],
         queryFn: async () => {
             if (!userId) return [];
@@ -59,17 +75,16 @@ export default function ExamDetailsPage() {
                 }
             });
             if (!response.ok) throw new Error("Failed to fetch students");
-            const data = await response.json();
-            return data.map((s: any) => ({
+            const data: StudentResponse[] = await response.json();
+            return data.map((s) => ({
                 id: s.id,
                 name: `Student ${s.id.slice(0, 4)}`,
                 status: s.marks !== null && s.marks !== undefined ? "completed" : "pending",
-                score: s.marks,
+                score: s.marks ?? undefined,
                 total_score: 100, // Assuming 100 for now
                 submitted_at: new Date().toISOString()
             }));
         },
-        refetchInterval: 5000, // Poll interval to keep UI reactive while grading background processes are running
         enabled: !!id && !!userId,
     });
 
@@ -89,7 +104,7 @@ export default function ExamDetailsPage() {
         mutationFn: async ({ type, files }: { type: 'reference' | 'answers', files: FileList }) => {
             if (!userId) throw new Error("Unauthorized");
 
-            const body: any = {};
+            const body: UploadRequestBody = {};
 
             if (type === 'reference') {
                 body.reference_file_base_64 = await fileToBase64(files[0]);
@@ -172,6 +187,13 @@ export default function ExamDetailsPage() {
                 <Button onClick={() => router.push("/home")} className="mt-8 rounded-xl px-8 h-12 font-bold shadow-lg shadow-primary/20">
                     Back to Dashboard
                 </Button>
+                <Button
+                    variant="outline"
+                    onClick={() => refetch()}
+                    className="mt-8 ml-3 rounded-xl px-8 h-12 font-bold"
+                >
+                    Try Again
+                </Button>
             </div>
         );
     }
@@ -216,6 +238,15 @@ export default function ExamDetailsPage() {
                 />
 
                 <div className="flex flex-wrap items-center gap-3">
+                    <Button
+                        variant="outline"
+                        className="rounded-xl h-11 px-4 font-semibold"
+                        onClick={() => refetch()}
+                        disabled={isFetching || !userId}
+                    >
+                        <RefreshCw className={`w-4 h-4 mr-2 ${isFetching ? "animate-spin" : ""}`} />
+                        {isFetching ? "Reloading..." : "Reload Results"}
+                    </Button>
                     <Button
                         variant="outline"
                         className="rounded-xl h-11 px-4 font-semibold"

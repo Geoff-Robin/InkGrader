@@ -3,8 +3,6 @@ import asyncio
 import logging
 import uuid
 
-import redis.asyncio as redis
-
 from Grading.models import GradingInfo
 from Database.config import async_session
 from Database.grading_job_dal import GradingJobDAL
@@ -12,12 +10,8 @@ from Database.models import GradingJob
 
 logger = logging.getLogger(__name__)
 
-REDIS_URL = os.environ.get("REDIS_URL", "redis://localhost:6379")
-GRADING_UPDATES_CHANNEL = "grading_updates"
 POLL_INTERVAL_SECONDS = float(os.environ.get("GRADING_WORKER_POLL_INTERVAL", "1.0"))
 BATCH_SIZE = int(os.environ.get("GRADING_WORKER_BATCH_SIZE", "10"))
-
-redis_client = redis.Redis.from_url(REDIS_URL, decode_responses=True)
 
 
 async def enqueue_grading_job(info: GradingInfo) -> None:
@@ -28,11 +22,6 @@ async def enqueue_grading_job(info: GradingInfo) -> None:
             student_ids=info.student_ids,
             priority=info.priority,
         )
-
-
-async def publish_grading_update(payload: dict) -> None:
-    import json
-    await redis_client.publish(GRADING_UPDATES_CHANNEL, json.dumps(payload))
 
 
 async def _process_exam_group(exam_id: uuid.UUID, jobs: list[GradingJob]) -> None:

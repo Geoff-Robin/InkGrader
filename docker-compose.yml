@@ -1,11 +1,4 @@
 services:
-  redis:
-    image: redis:7-alpine
-    ports:
-      - "6379:6379"
-    volumes:
-      - redis-data:/data
-
   postgres:
     image: pgvector/pgvector:pg16
     environment:
@@ -28,13 +21,10 @@ services:
       dockerfile: api/Dockerfile
     env_file: ./backend/.env.dev
     environment:
-      REDIS_URL: redis://redis:6379
       POSTGRES_URL: postgresql+psycopg://inkgrader:inkgrader@postgres:5432/inkgrader
     ports:
       - "8000:8000"
     depends_on:
-      redis:
-        condition: service_started
       postgres:
         condition: service_healthy
 
@@ -44,43 +34,25 @@ services:
       dockerfile: worker/Dockerfile
     env_file: ./backend/.env.dev
     environment:
-      REDIS_URL: redis://redis:6379
       POSTGRES_URL: postgresql+psycopg://inkgrader:inkgrader@postgres:5432/inkgrader
     depends_on:
       backend:
-        condition: service_started
-      redis:
         condition: service_started
       postgres:
         condition: service_healthy
     deploy:
       replicas: 3
 
-  gateway:
-    build:
-      context: ./backend
-      dockerfile: gateway/Dockerfile
-    env_file: ./backend/.env.dev
-    environment:
-      REDIS_URL: redis://redis:6379
-    ports:
-      - "8001:8001"
-    depends_on:
-      - redis
-
   frontend:
     build: ./frontend
     env_file: ./frontend/.env.dev
     environment:
       BACKEND_URL: http://backend:8000/
-      NEXT_PUBLIC_GATEWAY_WS_URL: ws://localhost:8001
       DATABASE_URL: postgresql://inkgrader:inkgrader@postgres:5432/inkgrader
     ports:
       - "3000:3000"
     depends_on:
       backend:
-        condition: service_started
-      gateway:
         condition: service_started
       postgres:
         condition: service_healthy
@@ -90,5 +62,4 @@ services:
       - /app/.next
 
 volumes:
-  redis-data:
   postgres-data:

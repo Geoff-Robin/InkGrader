@@ -10,7 +10,6 @@ from Database.answers_dal import AnswersDAL
 from Database.student_dal import StudentDAL
 from Database.locks import student_grading_lock
 from Grading.models import GradingInfo
-from Grading.queue import publish_grading_update
 
 logger = logging.getLogger(__name__)
 
@@ -70,18 +69,6 @@ async def grade_student(exam_id: uuid.UUID, student_id: uuid.UUID, question_map:
             else:
                 logger.warning(f"No valid answers graded for student {student_id}.")
                 success = False
-
-        payload = {
-            "exam_id": str(exam_id),
-            "student_id": str(student_id),
-            "message": f"Job has been finished for student {student_id} and exam {exam_id}"
-        }
-
-        try:
-            await publish_grading_update(payload)
-            logger.info(f"Published grading update for student {student_id} on exam {exam_id}.")
-        except Exception as e:
-            logger.error(f"Failed to publish grading update for student {student_id}: {e}")
 
         return success
 
